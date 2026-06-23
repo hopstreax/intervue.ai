@@ -1,0 +1,12 @@
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const doc = new PDFDocument();
+doc.pipe(fs.createWriteStream('test_resume.pdf'));
+doc.fontSize(20).text('JOHN DOE', 100, 100);
+doc.fontSize(16).text('EDUCATION', 100, 150);
+doc.fontSize(12).text('BS Computer Science at Tech University', 100, 170);
+doc.fontSize(16).text('SKILLS', 100, 220);
+doc.fontSize(12).text('JavaScript, React, Node.js, MongoDB', 100, 240);
+doc.fontSize(16).text('PROJECTS', 100, 290);
+doc.fontSize(12).text('Intervue.AI - An AI interview preparation platform', 100, 310);
+doc.end();

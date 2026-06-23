@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    @apply bg-white text-gray-900;
+    @apply transition-colors duration-300;
+  }
+
+  .dark body {
+    @apply bg-dark-900 text-gray-100;
+  }
+}
+
+@layer components {
+  /* Neon Glow Effect */
+  .neon-text {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.5), 0 0 40px rgba(6, 182, 212, 0.3);
+  }
+
+  .neon-border {
+    border-color: rgba(6, 182, 212, 0.6);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+  }
+
+  .neon-card {
+    @apply border border-cyan-500/20 rounded-2xl backdrop-blur-sm;
+    @apply bg-white/80 dark:bg-dark-700/60;
+    @apply transition-all duration-300;
+    @apply hover:border-cyan-500/50 hover:shadow-neon;
+  }
+
+  /* Grid background */
+  .bg-grid {
+    background-image: linear-gradient(rgba(6,182,212,0.04) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(6,182,212,0.04) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
+  }
+
+  /* Auth page background */
+  .auth-bg {
+    @apply min-h-screen flex items-center justify-center px-4 py-12;
+    @apply bg-gray-50 dark:bg-dark-900;
+  }
+
+  .auth-bg::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: linear-gradient(rgba(6,182,212,0.03) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(6, 182, 212, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(6, 182, 212, 0.7);
+}
