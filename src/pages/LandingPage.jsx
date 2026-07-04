@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { authService } from '../services'
 
 // Exact port of Stitch HTML → React JSX
 export default function LandingPage() {
   const navigate = useNavigate()
   const aiTextRef = useRef(null)
+  const isLoggedIn = authService.isAuthenticated()
 
   useEffect(() => {
     const el = aiTextRef.current
@@ -59,16 +61,28 @@ export default function LandingPage() {
           </nav>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link to="/login" style={{ padding: '8px 16px', fontWeight: 500, color: '#c7c4d7', textDecoration: 'none', transition: 'color 0.2s' }}>
-            Log In
-          </Link>
-          <Link to="/signup" style={{
-            padding: '8px 24px', background: '#c0c1ff', color: '#1000a9',
-            fontWeight: 700, borderRadius: '8px', textDecoration: 'none',
-            fontSize: '14px', transition: 'opacity 0.2s'
-          }}>
-            Sign Up
-          </Link>
+          {isLoggedIn ? (
+            <Link to="/dashboard" style={{
+              padding: '8px 24px', background: '#c0c1ff', color: '#1000a9',
+              fontWeight: 700, borderRadius: '8px', textDecoration: 'none',
+              fontSize: '14px', transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', gap: '6px'
+            }}>
+              Go to Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link to="/login" style={{ padding: '8px 16px', fontWeight: 500, color: '#c7c4d7', textDecoration: 'none', transition: 'color 0.2s' }}>
+                Log In
+              </Link>
+              <Link to="/signup" style={{
+                padding: '8px 24px', background: '#c0c1ff', color: '#1000a9',
+                fontWeight: 700, borderRadius: '8px', textDecoration: 'none',
+                fontSize: '14px', transition: 'opacity 0.2s'
+              }}>
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </header>
 

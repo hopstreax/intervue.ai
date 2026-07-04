@@ -72,6 +72,11 @@ export default function Summary() {
   const user = authService.getUser()
   if (!user) { navigate('/login'); return null }
 
+  const handleSignOut = () => {
+    authService.logout()
+    navigate('/login')
+  }
+
   const [activeTab, setActiveTab] = useState('analysis')
 
   const skills = { technical: 88, comm: 76, problem: 82, confidence: 70, explanation: 85 }
@@ -153,9 +158,9 @@ export default function Summary() {
           <a href="#" className="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-white/5 transition-all">
             <span className="material-symbols-outlined">help</span><span>Support</span>
           </a>
-          <a href="#" className="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-white/5 transition-all">
+          <button onClick={handleSignOut} className="w-full flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-error/5 hover:text-error transition-all">
             <span className="material-symbols-outlined">logout</span><span>Sign Out</span>
-          </a>
+          </button>
         </div>
       </aside>
 

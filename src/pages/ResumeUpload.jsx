@@ -35,10 +35,10 @@ function Sidebar({ active = 'upload' }) {
       </nav>
 
       <div className="px-sm mt-auto pt-md border-t border-white/5 space-y-xs">
-        <button onClick={() => navigate('/interview')}
-          className="w-full py-md bg-primary text-on-primary font-bold rounded-lg mb-sm active:scale-[0.98] transition-all hover:shadow-[0_0_20px_rgba(192,193,255,0.2)]">
+        <Link to="/upload"
+          className="w-full py-md bg-primary text-on-primary font-bold rounded-lg mb-sm active:scale-[0.98] transition-all hover:shadow-[0_0_20px_rgba(192,193,255,0.2)] block text-center">
           Start New Interview
-        </button>
+        </Link>
         <div className="flex items-center gap-md px-md py-sm rounded-xl hover:bg-white/5 transition-all cursor-pointer">
           <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
             <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
@@ -52,10 +52,12 @@ function Sidebar({ active = 'upload' }) {
           <span className="material-symbols-outlined text-base">help</span>
           <span>Support</span>
         </a>
-        <a href="#" className="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-white/5 transition-all text-sm">
+        <button
+          onClick={() => { authService.logout(); navigate('/login') }}
+          className="w-full flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-error/5 hover:text-error transition-all text-sm">
           <span className="material-symbols-outlined text-base">logout</span>
           <span>Sign Out</span>
-        </a>
+        </button>
       </div>
     </aside>
   )

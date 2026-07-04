@@ -142,13 +142,13 @@ export default function Interview() {
 
         {/* New Interview CTA */}
         <div className="px-lg mb-xl">
-          <button
-            onClick={startNewInterview}
+          <Link
+            to="/upload"
             className="w-full py-md px-lg bg-white/5 border border-white/10 rounded-xl text-on-surface flex items-center justify-center gap-sm hover:bg-white/10 transition-all active:scale-[0.98] text-sm"
           >
             <span className="material-symbols-outlined text-base">add</span>
             New Interview
-          </button>
+          </Link>
         </div>
 
         {/* Nav */}
@@ -195,6 +195,12 @@ export default function Interview() {
           <button onClick={handleEndInterview} className="w-full flex items-center gap-md px-lg py-md rounded-lg text-error hover:bg-error/5 transition-all text-sm">
             <span className="material-symbols-outlined text-base">stop_circle</span>
             <span>End Interview</span>
+          </button>
+          <button
+            onClick={() => { authService.logout(); navigate('/login') }}
+            className="w-full flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant hover:bg-error/5 hover:text-error transition-all text-sm">
+            <span className="material-symbols-outlined text-base">logout</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>
