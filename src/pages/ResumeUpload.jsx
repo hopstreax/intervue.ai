@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { authService } from '../services'
+import { API_BASE, authService } from '../services'
 
 function Sidebar({ active = 'upload' }) {
   const navigate = useNavigate()
@@ -111,7 +111,7 @@ export default function ResumeUpload() {
       const formData = new FormData()
       formData.append('resume', file)
       formData.append('userId', user._id)
-      const res = await fetch('http://localhost:5000/api/resume/upload', {
+      const res = await fetch(`${API_BASE}/resume/upload`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData,

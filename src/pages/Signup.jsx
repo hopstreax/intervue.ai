@@ -129,7 +129,7 @@ export default function Signup() {
                 {/* Social Auth */}
                 <div className="grid grid-cols-2 gap-md">
                   <button
-                    onClick={() => window.location.href = 'http://localhost:5000/api/auth/google'}
+                    onClick={() => window.location.href = authService.getOAuthUrl('google')}
                     className="flex items-center justify-center gap-sm py-sm px-md border border-white/8 rounded-xl hover:bg-white/5 hover:border-white/15 transition-all active:scale-[0.98] text-sm"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24">
@@ -141,7 +141,7 @@ export default function Signup() {
                     <span className="text-xs font-medium">Google</span>
                   </button>
                   <button
-                    onClick={() => window.location.href = 'http://localhost:5000/api/auth/github'}
+                    onClick={() => window.location.href = authService.getOAuthUrl('github')}
                     className="flex items-center justify-center gap-sm py-sm px-md border border-white/8 rounded-xl hover:bg-white/5 hover:border-white/15 transition-all active:scale-[0.98] text-sm"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-on-surface">

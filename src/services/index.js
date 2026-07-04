@@ -1,7 +1,7 @@
 // services/index.js
 // API service layer — connects frontend to the Express + MongoDB backend.
 
-const API_BASE = 'http://localhost:5000/api';
+export const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 /**
  * Helper: get the stored JWT token.
@@ -134,6 +134,8 @@ export const authService = {
     localStorage.setItem('intervue_token', token);
     localStorage.setItem('intervue_user', JSON.stringify(user));
   },
+
+  getOAuthUrl: (provider) => `${API_BASE}/auth/${provider}`,
 };
 
 // ── Resume Upload Service ────────────────────────────────────

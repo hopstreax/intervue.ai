@@ -9,13 +9,13 @@ const {
 
 const router = express.Router();
 
-// POST /api/resume/upload  — upload PDF + extract text
+// POST /api/resume/upload - upload PDF and extract text.
 router.post('/upload', protect, upload.single('resume'), uploadResume);
 
-// GET /api/resume/:userId  — list user's resumes (without extracted text)
-router.get('/:userId', protect, getUserResumes);
-
-// GET /api/resume/detail/:id  — single resume with full text
+// Keep specific routes before parameterized routes.
 router.get('/detail/:id', protect, getResumeById);
+
+// GET /api/resume/:userId - list user's resumes without extracted text.
+router.get('/:userId', protect, getUserResumes);
 
 module.exports = router;
