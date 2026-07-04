@@ -6,6 +6,7 @@ import Signup from './pages/Signup'
 import ResumeUpload from './pages/ResumeUpload'
 import Interview from './pages/Interview'
 import Summary from './pages/Summary'
+import OAuthCallback from './pages/OAuthCallback'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/upload"    element={<ResumeUpload />} />
         <Route path="/interview" element={<Interview />} />
         <Route path="/summary"   element={<Summary />} />
+        <Route path="/oauth/callback" element={<OAuthCallback />} />
       </Routes>
     </BrowserRouter>
   )

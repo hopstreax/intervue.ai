@@ -1,7 +1,9 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const passport = require('../config/passport');
 const { signup, login } = require('../controllers/authController');
+const { oauthCallback, oauthFailure } = require('../controllers/oauthController');
 
 const router = express.Router();
 
@@ -31,10 +33,51 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 });
 
+// ── Email / Password Auth ────────────────────────────────────
+
 // POST /api/auth/signup  — accepts optional 'resume' file field
 router.post('/signup', upload.single('resume'), signup);
 
 // POST /api/auth/login
 router.post('/login', express.json(), login);
+
+// ── Google OAuth ─────────────────────────────────────────────
+
+// GET /api/auth/google — start Google OAuth flow
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false })
+);
+
+// GET /api/auth/google/callback — Google redirects here after consent
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    failureRedirect: '/api/auth/failure',
+    session: false,
+  }),
+  oauthCallback
+);
+
+// ── GitHub OAuth ─────────────────────────────────────────────
+
+// GET /api/auth/github — start GitHub OAuth flow
+router.get(
+  '/github',
+  passport.authenticate('github', { scope: ['user:email'], session: false })
+);
+
+// GET /api/auth/github/callback — GitHub redirects here after consent
+router.get(
+  '/github/callback',
+  passport.authenticate('github', {
+    failureRedirect: '/api/auth/failure',
+    session: false,
+  }),
+  oauthCallback
+);
+
+// ── OAuth failure fallback ───────────────────────────────────
+router.get('/failure', oauthFailure);
 
 module.exports = router;

@@ -126,6 +126,14 @@ export const authService = {
     const user = localStorage.getItem('intervue_user');
     return user ? JSON.parse(user) : null;
   },
+
+  /**
+   * Save OAuth credentials.
+   */
+  oauthLogin: (token, user) => {
+    localStorage.setItem('intervue_token', token);
+    localStorage.setItem('intervue_user', JSON.stringify(user));
+  },
 };
 
 // ── Resume Upload Service ────────────────────────────────────

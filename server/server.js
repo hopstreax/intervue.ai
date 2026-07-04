@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
+const passport = require('./config/passport'); // OAuth strategies
 
 // ── Route imports ─────────────────────────────────────────────
 const authRoutes = require('./routes/authRoutes');
@@ -18,9 +19,14 @@ const resumeRoutes = require('./routes/resumeRoutes');
 const app = express();
 
 // ── Middleware ────────────────────────────────────────────────
-app.use(cors()); // Allow cross-origin requests from frontend
-app.use(express.json()); // Parse JSON request bodies
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+}));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize()); // Initialize Passport (no sessions — JWT-based)
+
 
 // ── API Routes ───────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
