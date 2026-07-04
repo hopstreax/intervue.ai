@@ -1,247 +1,171 @@
-import { Link } from 'react-router-dom'
-import {
-  ArrowRight, Upload, FileSearch, MessageSquare, BarChart3,
-  Star, Zap, Shield, ChevronRight, Play, CheckCircle2
-} from 'lucide-react'
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
-
-const features = [
-  {
-    icon: FileSearch,
-    title: 'Resume Analysis',
-    desc: 'Upload your CV, let our AI extract your skills, technologies, projects, and experience level automatically.',
-    color: 'from-cyan-500 to-blue-500',
-  },
-  {
-    icon: MessageSquare,
-    title: 'Adaptive Simulations',
-    desc: 'Practice with questions tailored to your background. The AI adapts based on your previous answers in real-time.',
-    color: 'from-violet-500 to-purple-600',
-  },
-  {
-    icon: BarChart3,
-    title: 'Detailed Feedback',
-    desc: 'Get instant scores out of 10, strengths analysis, missing points, and improved model answers after each response.',
-    color: 'from-emerald-500 to-teal-500',
-  },
-]
-
-const reasons = [
-  {
-    icon: Zap,
-    title: 'Reduce Interview Anxiety',
-    desc: 'Consistent practice in a judgment-free environment builds the confidence you need to ace real interviews.',
-  },
-  {
-    icon: Star,
-    title: 'Personalized Feedback',
-    desc: 'Receive tailored suggestions and model answers—not generic advice—based on your actual responses.',
-  },
-  {
-    icon: Shield,
-    title: 'Simulate Real Interviewers',
-    desc: 'Our AI mimics professional interviewers across domains: DSA, System Design, Behavioral, and more.',
-  },
-]
-
-const steps = [
-  { step: '01', title: 'Upload Resume', desc: 'Upload your PDF/DOCX resume.' },
-  { step: '02', title: 'AI Analysis', desc: 'We extract your skills and experience.' },
-  { step: '03', title: 'Start Interview', desc: 'Answer questions one at a time.' },
-  { step: '04', title: 'Get Report', desc: 'Receive your full performance report.' },
-]
+import { Link, useNavigate } from 'react-router-dom'
+import { authService } from '../services'
 
 export default function Dashboard() {
+  const navigate = useNavigate()
+  const user = authService.getUser()
+
+  const navItems = [
+    { id: 'dashboard', label: 'Home',      icon: 'dashboard', to: '/dashboard', active: true },
+    { id: 'upload',    label: 'Resume',    icon: 'upload_file', to: '/upload' },
+    { id: 'interview', label: 'Interview', icon: 'history', to: '/interview' },
+    { id: 'analytics', label: 'Analytics', icon: 'analytics', to: '#' },
+    { id: 'settings',  label: 'Settings',  icon: 'settings', to: '#' },
+  ]
+
+  const stats = [
+    { label: 'Sessions Completed', value: '12', icon: 'check_circle', color: 'text-primary' },
+    { label: 'Avg. Score',         value: '82',  icon: 'bar_chart',    color: 'text-secondary' },
+    { label: 'Study Streak',       value: '5d',  icon: 'local_fire_department', color: 'text-tertiary' },
+  ]
+
+  const features = [
+    { icon: 'psychology', color: 'text-primary',   title: 'Resume-Aware AI',     desc: 'Your resume guides every question — no generic drills, only what matters.' },
+    { icon: 'forum',      color: 'text-secondary',  title: 'Chat-Based Sessions', desc: 'Conversational flow simulating a real technical hiring manager.' },
+    { icon: 'bar_chart',  color: 'text-tertiary',   title: 'Instant Feedback',    desc: 'Scores, strengths, and model answers after every response.' },
+    { icon: 'map',        color: 'text-primary',    title: 'Improvement Roadmap', desc: 'Personalized study guide generated from your session gaps.' },
+  ]
+
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-900 text-gray-900 dark:text-white transition-colors duration-300">
-      <Navbar />
-
-      {/* ─── HERO SECTION ────────────────────────────────── */}
-      <section className="relative pt-28 pb-20 px-4 overflow-hidden">
-        {/* Background decorations */}
-        <div className="absolute inset-0 bg-grid opacity-100" />
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-32 right-10 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-5xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-500 dark:text-cyan-400 text-sm font-medium mb-8 backdrop-blur-sm">
-            <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
-            Powered by Google Gemini AI
-          </div>
-
-          {/* Heading */}
-          <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight mb-6 text-balance">
-            Master Your{' '}
-            <span className="gradient-text">AI Interview</span>
-          </h1>
-
-          {/* Subtext */}
-          <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Upload your resume and let our AI generate personalized interview questions, conduct adaptive mock interviews, and provide actionable feedback to accelerate your career.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/interview"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white
-                bg-cyan-500 hover:bg-cyan-400 shadow-neon hover:shadow-neon-lg
-                transition-all duration-300 text-base"
-            >
-              <Play className="w-4 h-4" />
-              Take Interview
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+    <div className="bg-background text-on-background min-h-screen flex">
+      {/* Sidebar */}
+      <aside className="hidden md:flex flex-col h-screen w-64 bg-surface-container-lowest border-r border-outline-variant/20 py-lg fixed left-0 top-0 z-40">
+        <div className="px-lg mb-xl">
+          <h1 className="text-2xl font-bold font-display text-primary tracking-tighter">InterviewIQ</h1>
+          <p className="text-xs font-mono text-on-surface-variant opacity-70 mt-xs">Premium Tier</p>
+        </div>
+        <nav className="flex-1 px-sm space-y-xs">
+          {navItems.map(item => (
+            <Link key={item.id} to={item.to}
+              className={`flex items-center gap-md px-md py-sm rounded-lg transition-all ${
+                item.active ? 'nav-active' : 'text-on-surface-variant hover:bg-white/5 hover:text-on-surface'
+              }`}>
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span>{item.label}</span>
             </Link>
-            <Link
-              to="/upload"
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold
-                border border-gray-300 dark:border-white/20 text-gray-700 dark:text-gray-200
-                hover:border-cyan-500/50 hover:text-cyan-600 dark:hover:text-cyan-400
-                hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-300 text-base"
-            >
-              <Upload className="w-4 h-4" />
-              Upload Resume
-            </Link>
-          </div>
-
-          {/* Social proof */}
-          <div className="flex justify-center items-center gap-6 mt-12 text-sm text-gray-500 dark:text-gray-400">
-            {[['10K+', 'Interviews Conducted'], ['95%', 'User Satisfaction'], ['500+', 'Companies Covered']].map(([num, label]) => (
-              <div key={label} className="text-center">
-                <div className="text-xl font-bold text-gray-900 dark:text-white">{num}</div>
-                <div className="text-xs">{label}</div>
-              </div>
-            ))}
+          ))}
+        </nav>
+        <div className="px-md mt-lg">
+          <button
+            onClick={() => navigate('/upload')}
+            className="w-full py-md bg-primary text-on-primary font-bold rounded-lg mb-lg active:scale-[0.98] transition-transform"
+          >
+            Start New Interview
+          </button>
+          <div className="space-y-xs mt-sm border-t border-white/5 pt-sm">
+            <a href="#" className="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-white/5 transition-all">
+              <span className="material-symbols-outlined">help</span><span>Support</span>
+            </a>
+            <a href="#" className="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-white/5 transition-all">
+              <span className="material-symbols-outlined">logout</span><span>Sign Out</span>
+            </a>
           </div>
         </div>
-      </section>
+      </aside>
 
-      {/* ─── FEATURES SECTION ─────────────────────────────── */}
-      <section className="py-20 px-4 bg-gray-50 dark:bg-dark-800/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Everything You Need to{' '}
-              <span className="gradient-text">Succeed</span>
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-              Three powerful pillars designed to transform you from a nervous candidate to a confident professional.
-            </p>
-          </div>
+      {/* Main */}
+      <main className="flex-1 md:ml-64 p-xl max-w-[1280px] mx-auto w-full">
+        {/* Header */}
+        <header className="mb-xl">
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-on-background tracking-tighter">
+            Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''} 👋
+          </h2>
+          <p className="text-lg text-on-surface-variant mt-xs">Ready to sharpen your interview skills today?</p>
+        </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {features.map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="neon-card p-6 group">
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
+        {/* Stats Row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
+          {stats.map(stat => (
+            <div key={stat.label} className="glass-card rounded-xl p-lg ai-glow flex items-center gap-md">
+              <div className="w-12 h-12 rounded-xl bg-surface-container-high flex items-center justify-center">
+                <span className={`material-symbols-outlined ${stat.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{stat.icon}</span>
               </div>
-            ))}
-          </div>
+              <div>
+                <div className={`text-3xl font-bold font-display ${stat.color}`}>{stat.value}</div>
+                <div className="text-xs font-mono text-on-surface-variant">{stat.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
-      </section>
 
-      {/* ─── HOW IT WORKS SECTION ───────────────────────── */}
-      <section id="how-it-works" className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              How It <span className="gradient-text">Works</span>
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400">Four simple steps to interview mastery</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map(({ step, title, desc }, i) => (
-              <div key={step} className="relative">
-                {i < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-8 left-full w-full h-px bg-gradient-to-r from-cyan-500/40 to-transparent z-10" />
-                )}
-                <div className="neon-card p-6 text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-violet-500/20 border border-cyan-500/30 flex items-center justify-center mx-auto mb-4">
-                    <span className="text-lg font-black text-cyan-500">{step}</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{desc}</p>
-                </div>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mb-xl">
+          {/* Start Interview CTA */}
+          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-xl opacity-15 group-hover:opacity-30 transition-opacity">
+              <span className="material-symbols-outlined text-primary" style={{ fontSize: '120px', fontVariationSettings: "'FILL' 1" }}>psychology</span>
+            </div>
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-sm px-md py-xs rounded-full border border-primary/30 bg-primary/10 text-xs font-mono text-primary mb-md">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                AI Ready
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── WHY SECTION ────────────────────────────────── */}
-      <section className="py-20 px-4 bg-gray-50 dark:bg-dark-800/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why <span className="gradient-text">Intervue.AI?</span>
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-              Designed by engineers who've been through hundreds of interviews—and know exactly what it takes.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {reasons.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex gap-4 p-6 rounded-2xl hover:bg-gray-100 dark:hover:bg-white/3 transition-colors duration-200">
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-cyan-500" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-1.5">{title}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── CTA SECTION ────────────────────────────────── */}
-      <section className="py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="relative inline-block w-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-violet-500/20 rounded-3xl blur-xl" />
-            <div className="relative border border-cyan-500/30 dark:border-cyan-500/20 rounded-3xl p-12 bg-white/50 dark:bg-dark-700/50 backdrop-blur-sm">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Ready to <span className="gradient-text">Ace Your Interview?</span>
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
-                Join thousands of candidates who leveled up their skills with Intervue.AI
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                {[
-                  'Resume-Tailored Questions',
-                  'Instant AI Feedback',
-                  'Performance Dashboard',
-                ].map(item => (
-                  <div key={item} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                    <CheckCircle2 className="w-4 h-4 text-cyan-500 flex-shrink-0" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <Link
-                to="/signup"
-                id="take-interview"
-                className="mt-8 inline-flex items-center gap-2 px-10 py-4 rounded-xl font-semibold text-white
-                  bg-cyan-500 hover:bg-cyan-400 shadow-neon hover:shadow-neon-lg
-                  transition-all duration-300 text-base"
+              <h3 className="font-display text-2xl font-bold text-on-background mb-sm">Start a Mock Interview</h3>
+              <p className="text-on-surface-variant mb-lg">Upload your resume and get a personalized AI-powered interview session in under 60 seconds.</p>
+              <button
+                onClick={() => navigate('/upload')}
+                className="px-xl py-md bg-primary text-on-primary font-bold rounded-xl hover:shadow-[0_0_30px_rgba(192,193,255,0.3)] active:scale-95 transition-all flex items-center gap-sm"
               >
-                Get Started Free
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+                <span className="material-symbols-outlined">upload_file</span>
+                Upload Resume & Begin
+              </button>
+            </div>
+          </div>
+
+          {/* Last Session */}
+          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-xl opacity-15 group-hover:opacity-30 transition-opacity">
+              <span className="material-symbols-outlined text-secondary" style={{ fontSize: '120px' }}>history</span>
+            </div>
+            <div className="relative z-10">
+              <div className="inline-flex items-center gap-sm px-md py-xs rounded-full border border-secondary/30 bg-secondary/10 text-xs font-mono text-secondary mb-md">
+                Last Session
+              </div>
+              <h3 className="font-display text-2xl font-bold text-on-background mb-sm">Performance Analysis</h3>
+              <p className="text-on-surface-variant mb-sm">Senior Software Engineer · Session #8241</p>
+              <div className="flex items-center gap-sm mb-lg">
+                <span className="text-4xl font-bold font-display text-primary">82</span>
+                <span className="text-on-surface-variant text-lg">/100</span>
+                <span className="ml-sm px-sm py-xs bg-primary/20 text-primary text-xs font-mono rounded-full">+4pts</span>
+              </div>
+              <button
+                onClick={() => navigate('/summary')}
+                className="px-xl py-md border border-outline-variant/30 text-on-surface font-bold rounded-xl hover:bg-white/5 active:scale-95 transition-all flex items-center gap-sm"
+              >
+                <span className="material-symbols-outlined">analytics</span>
+                View Full Report
+              </button>
             </div>
           </div>
         </div>
-      </section>
 
-      <Footer />
+        {/* Features Bento */}
+        <section>
+          <h3 className="font-display text-2xl font-bold text-on-background mb-lg">Platform Features</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-lg">
+            {features.map(f => (
+              <div key={f.title} className="glass-card rounded-xl p-lg group hover:border-primary/20 transition-all">
+                <span className={`material-symbols-outlined ${f.color} text-3xl mb-md block`} style={{ fontVariationSettings: "'FILL' 1" }}>{f.icon}</span>
+                <h4 className="font-display text-lg font-bold text-on-background mb-sm">{f.title}</h4>
+                <p className="text-sm text-on-surface-variant">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="w-full py-xl mt-20 flex flex-col md:flex-row justify-between items-center gap-md border-t border-white/5">
+          <div>
+            <span className="font-display text-lg font-bold text-on-background tracking-tighter">InterviewIQ AI</span>
+            <p className="text-xs font-mono text-on-surface-variant mt-xs">© 2024 InterviewIQ AI. Surgical precision in every hire.</p>
+          </div>
+          <div className="flex gap-lg">
+            {['Privacy Policy', 'Terms of Service', 'Security'].map(link => (
+              <a key={link} href="#" className="text-xs font-mono text-on-surface-variant hover:text-secondary transition-colors">{link}</a>
+            ))}
+          </div>
+        </footer>
+      </main>
     </div>
   )
 }

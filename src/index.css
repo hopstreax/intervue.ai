@@ -1,9 +1,27 @@
+/* ─── Geist font via CDN ─────────────────────────────────────────── */
+@import url('https://fonts.cdnfonts.com/css/geist');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ─── CSS Custom Properties (Stitch Design Tokens) ───────────────── */
+:root {
+  /* === RGB Channels — enable bg-primary/10, text-primary/50 etc. === */
+  --rgb-primary:                    192, 193, 255;
+  --rgb-primary-container:          128, 131, 255;
+  --rgb-secondary:                  76, 215, 246;
+  --rgb-tertiary:                   255, 183, 131;
+  --rgb-background:                 19, 19, 19;
+  --rgb-surface-container-lowest:   14, 14, 14;
+  --rgb-surface-container-low:      28, 27, 27;
+  --rgb-surface-container:          32, 31, 31;
+  --rgb-surface-container-high:     42, 42, 42;
+}
+
+/* ─── Base Layer ──────────────────────────────────────────────────── */
 @layer base {
-  * {
+  *, *::before, *::after {
     box-sizing: border-box;
   }
 
@@ -12,82 +30,120 @@
   }
 
   body {
-    @apply font-sans antialiased;
-    @apply bg-white text-gray-900;
-    @apply transition-colors duration-300;
+    background-color: #131313;
+    color: #e5e2e1;
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
-  .dark body {
-    @apply bg-dark-900 text-gray-100;
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    vertical-align: middle;
+    line-height: 1;
+  }
+
+  ::selection {
+    background-color: #8083ff;
+    color: #0d0096;
   }
 }
 
+/* ─── Component Layer ─────────────────────────────────────────────── */
 @layer components {
-  /* Neon Glow Effect */
-  .neon-text {
-    text-shadow: 0 0 10px rgba(6, 182, 212, 0.8), 0 0 20px rgba(6, 182, 212, 0.5), 0 0 40px rgba(6, 182, 212, 0.3);
+
+  /* ── Glass Card (exact Stitch spec) ────────────────────────── */
+  .glass-card {
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .neon-border {
-    border-color: rgba(6, 182, 212, 0.6);
-    box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+  .glass-panel {
+    background: rgba(20, 20, 20, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .neon-card {
-    @apply border border-cyan-500/20 rounded-2xl backdrop-blur-sm;
-    @apply bg-white/80 dark:bg-dark-700/60;
-    @apply transition-all duration-300;
-    @apply hover:border-cyan-500/50 hover:shadow-neon;
+  /* ── AI Glow (exact Stitch spec) ───────────────────────────── */
+  .ai-glow {
+    box-shadow: 0px 0px 20px rgba(99, 102, 241, 0.15);
   }
 
-  /* Grid background */
-  .bg-grid {
-    background-image: linear-gradient(rgba(6,182,212,0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(6,182,212,0.04) 1px, transparent 1px);
-    background-size: 50px 50px;
+  .ai-glow-lg {
+    box-shadow: 0px 0px 40px rgba(192, 193, 255, 0.2);
   }
 
-  /* Gradient text */
+  /* ── Gradient Text ──────────────────────────────────────────── */
   .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #22d3ee 0%, #a78bfa 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #c0c1ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  /* Auth page background */
-  .auth-bg {
-    @apply min-h-screen flex items-center justify-center px-4 py-12;
-    @apply bg-gray-50 dark:bg-dark-900;
-  }
-
-  .auth-bg::before {
+  /* ── Typing Cursor ──────────────────────────────────────────── */
+  .typing-cursor::after {
     content: '';
-    position: fixed;
-    inset: 0;
-    background-image: linear-gradient(rgba(6,182,212,0.03) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    pointer-events: none;
-    z-index: 0;
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: #c0c1ff;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
   }
-}
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0; }
   }
-}
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(6, 182, 212, 0.4);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(6, 182, 212, 0.7);
+  /* ── Nav Active State ───────────────────────────────────────── */
+  .nav-active {
+    background: rgba(192, 193, 255, 0.08);
+    color: #c0c1ff;
+    font-weight: 600;
+  }
+
+  /* ── Shimmer Loading ────────────────────────────────────────── */
+  .shimmer {
+    background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+    background-size: 400% 100%;
+    animation: shimmer 2s infinite linear;
+  }
+
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
+
+  /* ── Custom Scrollbar ───────────────────────────────────────── */
+  .custom-scrollbar::-webkit-scrollbar       { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 9999px;
+  }
+
+  /* ── Input focus ring ───────────────────────────────────────── */
+  .input-field {
+    background: #0e0e0e;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 0.5rem;
+    padding: 12px 16px;
+    color: #e5e2e1;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-size: 1rem;
+  }
+  .input-field::placeholder { color: #908fa0; }
+  .input-field:focus {
+    outline: none;
+    border-color: #c0c1ff;
+    box-shadow: 0 0 10px rgba(192,193,255,0.2);
+  }
 }
