@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { authService } from '../services'
+import { authService, interviewService } from '../services'
 
 function RadarChart({ skills }) {
   // 5-axis radar with actual skill values
@@ -70,43 +70,105 @@ function RadarChart({ skills }) {
 export default function Summary() {
   const navigate = useNavigate()
   const user = authService.getUser()
-  if (!user) { navigate('/login'); return null }
+  
+  const [evalData, setEvalData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('analysis')
+
+  useEffect(() => {
+    if (!user) { navigate('/login'); return }
+    async function loadSummary() {
+      try {
+        const res = await interviewService.getSummary()
+        if (res && res.success && res.data) {
+          setEvalData(res.data)
+        }
+      } catch (err) {
+        console.warn('Failed to load real interview summary, using mock data:', err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadSummary()
+  }, [user?._id, navigate])
 
   const handleSignOut = () => {
     authService.logout()
     navigate('/login')
   }
 
-  const [activeTab, setActiveTab] = useState('analysis')
+  if (!user) return null
 
-  const skills = { technical: 88, comm: 76, problem: 82, confidence: 70, explanation: 85 }
+  const mockSkills = { technical: 88, comm: 76, problem: 82, confidence: 70, explanation: 85 }
 
-  const strengths = [
-    'Clear articulation of complex system architecture',
-    'Expert knowledge of React hook lifecycle optimization',
-    'Strong debugging methodology demonstration',
-  ]
-  const weaknesses = [
-    'Vague explanation of database indexing strategies',
-    'Over-reliance on standard library for security',
-  ]
-  const studyTopics = [
-    { icon: 'security', color: 'text-tertiary',  bg: 'bg-tertiary/10',   title: 'JWT Authentication', sub: 'Focus on Refresh Tokens & Scopes',      priority: 'High' },
-    { icon: 'api',      color: 'text-secondary', bg: 'bg-secondary/10',  title: 'REST API Patterns',  sub: 'HATEOAS and Versioning Strategies',     priority: 'Medium' },
-    { icon: 'storage',  color: 'text-primary',   bg: 'bg-primary/10',    title: 'MongoDB Indexing',   sub: 'Compound & partial indexes',             priority: 'High' },
-  ]
-  const roadmap = [
-    { day: 'MONDAY',    priority: 'High Priority', title: 'MongoDB Indexing Deep Dive',    desc: 'Review compound indexes, partial indexes, and explain plans to justify performance gains.' },
-    { day: 'TUESDAY',   priority: null,            title: 'JWT & OAuth2 Protocols',        desc: 'Master the handshake process and security considerations for single-page applications.' },
-    { day: 'WEDNESDAY', priority: null,            title: 'React Hooks Performance',       desc: 'Advanced patterns with useMemo, useCallback, and custom hooks for enterprise state management.' },
-  ]
+  const skills = evalData ? {
+    technical: evalData.technicalDepth || 80,
+    comm: evalData.communication || 75,
+    problem: evalData.problemSolving || 80,
+    confidence: evalData.confidence || 75,
+    explanation: evalData.explanation || 80
+  } : mockSkills
+
+  const overallScore = evalData ? (evalData.overallScore || 80) : 82
+
+  const strengths = evalData && evalData.strengths && evalData.strengths.length > 0
+    ? evalData.strengths
+    : [
+        'Clear articulation of complex system architecture',
+        'Expert knowledge of React hook lifecycle optimization',
+        'Strong debugging methodology demonstration',
+      ]
+
+  const weaknesses = evalData && evalData.weaknesses && evalData.weaknesses.length > 0
+    ? evalData.weaknesses
+    : [
+        'Vague explanation of database indexing strategies',
+        'Over-reliance on standard library for security',
+      ]
+
+  const studyTopics = evalData && evalData.studyTopics && evalData.studyTopics.length > 0
+    ? evalData.studyTopics.map(t => ({
+        ...t,
+        color: t.icon === 'security' ? 'text-tertiary' : t.icon === 'api' ? 'text-secondary' : 'text-primary',
+        bg: t.icon === 'security' ? 'bg-tertiary/10' : t.icon === 'api' ? 'bg-secondary/10' : 'bg-primary/10'
+      }))
+    : [
+        { icon: 'security', color: 'text-tertiary',  bg: 'bg-tertiary/10',   title: 'JWT Authentication', sub: 'Focus on Refresh Tokens & Scopes',      priority: 'High' },
+        { icon: 'api',      color: 'text-secondary', bg: 'bg-secondary/10',  title: 'REST API Patterns',  sub: 'HATEOAS and Versioning Strategies',     priority: 'Medium' },
+        { icon: 'storage',  color: 'text-primary',   bg: 'bg-primary/10',    title: 'MongoDB Indexing',   sub: 'Compound & partial indexes',             priority: 'High' },
+      ]
+
+  const roadmap = evalData && evalData.roadmap && evalData.roadmap.length > 0
+    ? evalData.roadmap
+    : [
+        { day: 'MONDAY',    priority: 'High Priority', title: 'MongoDB Indexing Deep Dive',    desc: 'Review compound indexes, partial indexes, and explain plans to justify performance gains.' },
+        { day: 'TUESDAY',   priority: null,            title: 'JWT & OAuth2 Protocols',        desc: 'Master the handshake process and security considerations for single-page applications.' },
+        { day: 'WEDNESDAY', priority: null,            title: 'React Hooks Performance',       desc: 'Advanced patterns with useMemo, useCallback, and custom hooks for enterprise state management.' },
+      ]
 
   const scoreBreakdown = [
-    { label: 'Technical Depth',    score: 88, color: 'bg-primary', textColor: 'text-primary' },
-    { label: 'Communication',      score: 76, color: 'bg-secondary', textColor: 'text-secondary' },
-    { label: 'Problem Solving',    score: 82, color: 'bg-primary', textColor: 'text-primary' },
-    { label: 'Confidence',         score: 70, color: 'bg-tertiary', textColor: 'text-tertiary' },
+    { label: 'Technical Depth',    score: skills.technical, color: 'bg-primary', textColor: 'text-primary' },
+    { label: 'Communication',      score: skills.comm, color: 'bg-secondary', textColor: 'text-secondary' },
+    { label: 'Problem Solving',    score: skills.problem, color: 'bg-primary', textColor: 'text-primary' },
+    { label: 'Confidence',         score: skills.confidence, color: 'bg-tertiary', textColor: 'text-tertiary' },
   ]
+
+  const aiFeedback = evalData && evalData.aiFeedback
+    ? evalData.aiFeedback
+    : 'Candidate demonstrates strong architectural thinking. Technical depth in MongoDB and React is evident, though security protocols (JWT) lacked specific implementation details.'
+
+  if (loading) {
+    return (
+      <div className="bg-background min-h-screen flex flex-col items-center justify-center text-center p-xl">
+        <div className="relative w-16 h-16 mb-lg">
+          <div className="absolute inset-0 rounded-full border-4 border-white/5" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+        </div>
+        <h2 className="text-xl font-bold font-display text-on-surface">Loading Performance Report</h2>
+        <p className="text-sm text-on-surface-variant">Fetching your latest interview insights...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-background text-on-background min-h-screen flex">
@@ -126,7 +188,7 @@ export default function Summary() {
           <div className="glass-card rounded-xl p-md">
             <p className="text-xs font-mono text-outline-variant uppercase tracking-widest mb-sm">Session Score</p>
             <div className="flex items-baseline gap-xs mb-xs">
-              <span className="text-4xl font-bold font-display text-primary tabular-nums">82</span>
+              <span className="text-4xl font-bold font-display text-primary tabular-nums">{overallScore}</span>
               <span className="text-on-surface-variant">/100</span>
             </div>
             <div className="flex items-center gap-xs">
@@ -223,7 +285,7 @@ export default function Summary() {
                   <p className="text-on-surface-variant text-sm">AI-evaluated across core pillars</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-5xl font-bold font-display text-primary tabular-nums">82<span className="text-2xl text-on-surface-variant/50">/100</span></span>
+                  <span className="text-5xl font-bold font-display text-primary tabular-nums">{overallScore}<span className="text-2xl text-on-surface-variant/50">/100</span></span>
                   <p className="text-xs font-mono text-secondary uppercase tracking-widest mt-xs">Surgical Precision</p>
                 </div>
               </div>
@@ -247,7 +309,7 @@ export default function Summary() {
                   <div className="p-md bg-white/3 rounded-lg border border-white/5">
                     <p className="text-xs font-mono text-secondary mb-xs">AI FEEDBACK</p>
                     <p className="text-sm text-on-surface leading-relaxed">
-                      Candidate demonstrates strong architectural thinking. Technical depth in MongoDB and React is evident, though security protocols (JWT) lacked specific implementation details.
+                      {aiFeedback}
                     </p>
                   </div>
                   <div className="flex justify-between items-center text-xs font-mono">

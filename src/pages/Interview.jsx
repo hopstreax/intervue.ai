@@ -9,6 +9,15 @@ export default function Interview() {
   const [inputVal, setInputVal] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [ending, setEnding] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [modelType, setModelType] = useState('gemini') // gemini or chatgpt
+  const [paymentStep, setPaymentStep] = useState('plan') // plan, checkout, success
+  const [cardName, setCardName] = useState('')
+  const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242')
+  const [cardExpiry, setCardExpiry] = useState('12/28')
+  const [cardCvc, setCardCvc] = useState('424')
+  const [processingPayment, setProcessingPayment] = useState(false)
   const [metrics, setMetrics] = useState({ clarity: 0, accuracy: 0, questionsAnswered: 0 })
   const [error, setError] = useState('')
   const [questionNum, setQuestionNum] = useState(1)
@@ -69,16 +78,52 @@ export default function Interview() {
       if (res.data.metrics) setMetrics(res.data.metrics)
       setQuestionNum(q => q + 1)
     } catch (err) {
-      setError(err.message || 'Failed to send message')
-      setMessages(prev => prev.slice(0, -1))
-      setInputVal(userMessage)
+      if (err.message && (err.message.includes('limit') || err.message.includes('upgrade') || err.message.includes('reached'))) {
+        setShowUpgradeModal(true)
+        // Keep the message in input so they don't lose their typed answer!
+        setInputVal(userMessage)
+        // Remove the temporary user message from display so it is re-sent after upgrading
+        setMessages(prev => prev.slice(0, -1))
+      } else {
+        setError(err.message || 'Failed to send message')
+        setMessages(prev => prev.slice(0, -1))
+        setInputVal(userMessage)
+      }
     } finally {
       setSending(false)
     }
   }
 
-  const handleEndInterview = () => {
-    if (window.confirm('Are you sure you want to end this interview?')) navigate('/summary')
+  const handleEndInterview = async () => {
+    if (!window.confirm('Are you sure you want to end this interview and generate your performance report?')) return
+    setEnding(true); setError('')
+    try {
+      await interviewService.end(session)
+      navigate('/summary')
+    } catch (err) {
+      setError(err.message || 'Failed to generate report. Please try again.')
+    } finally {
+      setEnding(false)
+    }
+  }
+
+  const handleUpgradePayment = async (e) => {
+    if (e) e.preventDefault()
+    setProcessingPayment(true); setError('')
+    try {
+      await authService.upgrade()
+      setPaymentStep('success')
+    } catch (err) {
+      setError(err.message || 'Payment processing failed. Please try again.')
+    } finally {
+      setProcessingPayment(false)
+    }
+  }
+
+  const handleCloseUpgradeModal = () => {
+    setShowUpgradeModal(false)
+    setPaymentStep('plan')
+    setError('')
   }
 
   const handleTextareaChange = (e) => {
@@ -392,6 +437,232 @@ export default function Interview() {
           </div>
         </div>
       </main>
+
+      {/* ── GENERATING AI REPORT OVERLAY ────────────────────────────── */}
+      {ending && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-center p-xl">
+          <div className="relative w-20 h-20 mb-lg">
+            <div className="absolute inset-0 rounded-full border-4 border-white/5" />
+            <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+          </div>
+          <h2 className="text-2xl font-bold font-display text-on-surface mb-xs">Generating Your Report</h2>
+          <p className="text-sm text-on-surface-variant max-w-sm">
+            Gemini is analyzing your answers, evaluating communication clarity, and structuring your custom study roadmap...
+          </p>
+        </div>
+      )}
+
+      {/* ── PREMIUM UPGRADE MODAL ────────────────────────────────────── */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-center justify-center p-md">
+          <div className="glass-card rounded-2xl border border-white/10 max-w-lg w-full overflow-hidden shadow-2xl relative" style={{ boxShadow: '0 0 80px rgba(192,193,255,0.1)' }}>
+            
+            {/* Header / Close button (only show close button if not successful yet) */}
+            {paymentStep !== 'success' && (
+              <button
+                onClick={handleCloseUpgradeModal}
+                className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-white/5 transition-colors z-10"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            )}
+
+            {/* Inner modal body */}
+            <div className="p-xl flex flex-col gap-lg">
+              
+              {/* STEP 1: PLAN SELECTOR */}
+              {paymentStep === 'plan' && (
+                <>
+                  <div className="text-center space-y-xs">
+                    <span className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-mono text-primary uppercase font-bold tracking-wider">Upgrade Premium</span>
+                    <h2 className="text-2xl font-bold font-display text-on-surface tracking-tight">Unlock Unlimited AI Interviews</h2>
+                    <p className="text-sm text-on-surface-variant">You've reached the free tier limit of 3 questions. Choose your preferences to continue.</p>
+                  </div>
+
+                  <div className="space-y-md">
+                    {/* Model Select */}
+                    <label className="text-xs font-mono text-outline-variant uppercase">1. Select AI Model Engine</label>
+                    <div className="grid grid-cols-2 gap-sm">
+                      <button
+                        onClick={() => setModelType('gemini')}
+                        className={`p-md rounded-xl border flex flex-col gap-xs text-left transition-all ${
+                          modelType === 'gemini' ? 'border-primary bg-primary/5 shadow-[0_0_15px_rgba(192,193,255,0.15)]' : 'border-white/5 bg-white/2 hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center gap-xs font-bold text-sm text-on-surface">
+                          <span className="material-symbols-outlined text-primary text-base">auto_awesome</span>
+                          Google Gemini
+                        </div>
+                        <span className="text-[10px] text-on-surface-variant">1.5 Pro · Deep Analytical Insights</span>
+                      </button>
+                      <button
+                        onClick={() => setModelType('chatgpt')}
+                        className={`p-md rounded-xl border flex flex-col gap-xs text-left transition-all ${
+                          modelType === 'chatgpt' ? 'border-secondary bg-secondary/5 shadow-[0_0_15px_rgba(76,215,246,0.15)]' : 'border-white/5 bg-white/2 hover:bg-white/5'
+                        }`}
+                      >
+                        <div className="flex items-center gap-xs font-bold text-sm text-on-surface">
+                          <span className="material-symbols-outlined text-secondary text-base">bolt</span>
+                          ChatGPT
+                        </div>
+                        <span className="text-[10px] text-on-surface-variant">GPT-4o · Precise Coding Synthesis</span>
+                      </button>
+                    </div>
+
+                    {/* Feature Perks */}
+                    <div className="p-md bg-white/3 rounded-xl border border-white/5 space-y-sm">
+                      <div className="flex items-center gap-sm text-sm text-on-surface">
+                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                        <span>Unlimited technical Q&A sessions</span>
+                      </div>
+                      <div className="flex items-center gap-sm text-sm text-on-surface">
+                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                        <span>Personalized shortcoming lists & roadmaps</span>
+                      </div>
+                      <div className="flex items-center gap-sm text-sm text-on-surface">
+                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
+                        <span>PDF reports & future Voice Mode access</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-md pt-md border-t border-white/5">
+                    <div>
+                      <span className="text-xs text-on-surface-variant font-mono">Monthly plan</span>
+                      <div className="flex items-baseline gap-xs">
+                        <span className="text-3xl font-bold font-display text-on-surface">$15</span>
+                        <span className="text-sm text-on-surface-variant">/mo</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setPaymentStep('checkout')}
+                      className="bg-primary text-on-primary font-bold px-lg py-md rounded-xl hover:scale-105 active:scale-95 transition-all text-sm flex items-center gap-xs"
+                    >
+                      Choose Plan
+                      <span className="material-symbols-outlined text-base">arrow_forward</span>
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* STEP 2: SIMULATED PAYMENT CHECKOUT */}
+              {paymentStep === 'checkout' && (
+                <form onSubmit={handleUpgradePayment} className="space-y-md">
+                  <div className="text-center space-y-xs">
+                    <h2 className="text-xl font-bold font-display text-on-surface">Secure Sandbox Checkout</h2>
+                    <p className="text-xs text-on-surface-variant">Please complete the payment using this free checkout simulation.</p>
+                  </div>
+
+                  <div className="space-y-sm">
+                    {/* Cardholder Name */}
+                    <div className="flex flex-col gap-xs">
+                      <label className="text-[10px] font-mono text-outline-variant uppercase">Cardholder Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="John Doe"
+                        value={cardName}
+                        onChange={e => setCardName(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-md py-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 text-sm"
+                      />
+                    </div>
+
+                    {/* Card Number */}
+                    <div className="flex flex-col gap-xs">
+                      <label className="text-[10px] font-mono text-outline-variant uppercase">Card Number</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-base">credit_card</span>
+                        <input
+                          type="text"
+                          required
+                          value={cardNumber}
+                          onChange={e => setCardNumber(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-md py-sm text-on-surface font-mono focus:outline-none focus:border-primary/50 text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Expiry & CVC */}
+                    <div className="grid grid-cols-2 gap-sm">
+                      <div className="flex flex-col gap-xs">
+                        <label className="text-[10px] font-mono text-outline-variant uppercase">Expiry Date</label>
+                        <input
+                          type="text"
+                          required
+                          value={cardExpiry}
+                          onChange={e => setCardExpiry(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-md py-sm text-on-surface font-mono text-center focus:outline-none focus:border-primary/50 text-sm"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-xs">
+                        <label className="text-[10px] font-mono text-outline-variant uppercase">CVC / CVV</label>
+                        <input
+                          type="text"
+                          required
+                          value={cardCvc}
+                          onChange={e => setCardCvc(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-md py-sm text-on-surface font-mono text-center focus:outline-none focus:border-primary/50 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="p-sm bg-error-container/20 border border-error/30 text-error rounded-xl text-xs font-mono flex items-center gap-xs">
+                      <span className="material-symbols-outlined text-sm">warning</span>
+                      {error}
+                    </div>
+                  )}
+
+                  <div className="flex gap-sm pt-md border-t border-white/5">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentStep('plan')}
+                      disabled={processingPayment}
+                      className="flex-1 py-md border border-white/10 text-on-surface-variant font-bold rounded-xl hover:bg-white/5 transition-all text-sm"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={processingPayment}
+                      className="flex-1 py-md bg-primary text-on-primary font-bold rounded-xl hover:opacity-90 active:scale-95 transition-all text-sm flex items-center justify-center gap-xs"
+                    >
+                      {processingPayment ? 'Processing...' : 'Complete Payment'}
+                      <span className="material-symbols-outlined text-base">lock</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* STEP 3: CELEBRATION SUCCESS PAGE */}
+              {paymentStep === 'success' && (
+                <div className="text-center py-md flex flex-col items-center gap-md">
+                  <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center animate-bounce">
+                    <span className="material-symbols-outlined text-primary text-3xl font-bold">verified</span>
+                  </div>
+
+                  <div className="space-y-xs">
+                    <h2 className="text-2xl font-bold font-display text-on-surface">Payment Successful!</h2>
+                    <p className="text-sm text-on-surface-variant max-w-sm">
+                      Your account has been upgraded to <strong className="text-primary font-semibold">Premium Tier</strong>. Unlimited sessions, full shortcomings roadmap, and advanced models are unlocked!
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleCloseUpgradeModal}
+                    className="w-full mt-lg py-md bg-primary text-on-primary font-bold rounded-xl active:scale-95 transition-all text-sm flex items-center justify-center gap-xs shadow-lg shadow-primary/20"
+                  >
+                    Unlock & Continue Interview
+                    <span className="material-symbols-outlined text-base font-bold">arrow_forward</span>
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

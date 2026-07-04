@@ -109,6 +109,7 @@ const signup = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        tier: user.tier,
       },
       token: generateToken(user._id),
       resume: resumeData,
@@ -155,6 +156,7 @@ const login = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        tier: user.tier,
       },
       token: generateToken(user._id),
     });
@@ -163,4 +165,36 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, login };
+/**
+ * ── POST /api/auth/upgrade ────────────────────────────────────
+ * Upgrade user tier to premium after mock payment completes.
+ */
+const upgradeUser = async (req, res, next) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.tier = 'premium';
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Account successfully upgraded to Premium Tier!',
+      data: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        tier: user.tier
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { signup, login, upgradeUser };

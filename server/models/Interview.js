@@ -46,6 +46,10 @@ const interviewSchema = new mongoose.Schema(
       accuracy: { type: Number, default: 0 },
       tone: { type: Number, default: 0 },
       questionsAnswered: { type: Number, default: 0 }
+    },
+    evaluation: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null
     }
   },
   {

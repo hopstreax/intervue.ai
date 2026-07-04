@@ -53,6 +53,11 @@ const userSchema = new mongoose.Schema(
       enum: ['local', 'google', 'github'],
       default: 'local',
     },
+    tier: {
+      type: String,
+      enum: ['free', 'premium'],
+      default: 'free',
+    },
   },
   {
     timestamps: true,

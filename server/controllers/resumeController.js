@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const Resume = require('../models/Resume');
+const { parseResumeWithGemini } = require('../utils/gemini');
 
 // ── Multer Configuration ─────────────────────────────────────
 
@@ -100,16 +101,28 @@ const uploadResume = async (req, res, next) => {
 
     // ── Extract text from PDF ──────────────────────────────
     let extractedText = '';
+    let sections = { education: '', skills: '', projects: '', internships: '', extracurriculars: '' };
+
     try {
       const pdfBuffer = fs.readFileSync(req.file.path);
       const pdfData = await pdfParse(pdfBuffer);
       extractedText = cleanText(pdfData.text);
 
-      // Update resume doc with extracted text
+      // Call Gemini to parse into structured sections
+      sections = await parseResumeWithGemini(extractedText);
+
+      // Update resume doc with extracted text and structured sections
       resume.extractedText = extractedText;
+      resume.sections = {
+        education: sections.education || '',
+        skills: sections.skills || '',
+        projects: sections.projects || '',
+        internships: sections.internships || sections.experience || '',
+        extracurriculars: sections.extracurriculars || '',
+      };
       resume.parsingStatus = 'success';
     } catch (parseError) {
-      console.error('PDF parsing error:', parseError.message);
+      console.error('PDF parsing/Gemini error:', parseError.message);
       resume.parsingStatus = 'failed';
       resume.parsingError = parseError.message;
     }

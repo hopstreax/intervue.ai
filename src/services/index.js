@@ -136,6 +136,20 @@ export const authService = {
   },
 
   getOAuthUrl: (provider) => `${API_BASE}/auth/${provider}`,
+
+  /**
+   * POST /api/auth/upgrade
+   * Upgrades the logged-in user to Premium Tier.
+   */
+  upgrade: async () => {
+    const result = await apiFetch('/auth/upgrade', {
+      method: 'POST',
+    });
+    if (result.success && result.data) {
+      localStorage.setItem('intervue_user', JSON.stringify(result.data));
+    }
+    return result;
+  },
 };
 
 // ── Resume Upload Service ────────────────────────────────────
@@ -186,6 +200,26 @@ export const interviewService = {
    */
   getInterviews: async () => {
     return apiFetch('/interviews');
+  },
+
+  /**
+   * POST /api/interviews/end
+   * Ends and scores the active interview using Gemini evaluation.
+   */
+  end: async (interviewId) => {
+    return apiFetch('/interviews/end', {
+      method: 'POST',
+      body: JSON.stringify({ interviewId }),
+    });
+  },
+
+  /**
+   * GET /api/interviews/summary
+   * Fetches the transcript performance summary.
+   */
+  getSummary: async (interviewId) => {
+    const query = interviewId ? `?interviewId=${interviewId}` : '';
+    return apiFetch(`/interviews/summary${query}`);
   },
 };
 

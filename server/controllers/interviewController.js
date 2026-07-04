@@ -1,7 +1,8 @@
 const Interview = require('../models/Interview');
 const Resume = require('../models/Resume');
 const Analytics = require('../models/Analytics');
-const { generateLlamaResponse } = require('../utils/huggingface');
+const User = require('../models/User');
+const { generateGeminiChatResponse, evaluateInterviewWithGemini } = require('../utils/gemini');
 
 /**
  * Helper to build the master system prompt
@@ -94,13 +95,13 @@ const startInterview = async (req, res, next) => {
       { role: 'user', content: 'Begin the interview. Welcome me based on my skills and ask the first behavioral or technical question.' }
     ];
 
-    console.log(`[Backend] Dispatching initial prompt request to LLaMA Engine via Hugging Face...`);
+    console.log(`[Backend] Dispatching initial prompt request to Gemini AI...`);
     const t0 = Date.now();
-    const rawResponse = await generateLlamaResponse(initialPrompt, systemPrompt);
-    console.log(`[Backend] \u2714 Received response from LLaMA in ${Date.now() - t0}ms`);
+    const rawResponse = await generateGeminiChatResponse(initialPrompt, systemPrompt);
+    console.log(`[Backend] \u2714 Received response from Gemini in ${Date.now() - t0}ms`);
     
     const { feedback, question } = parseAiOutput(rawResponse);
-    console.log(`[Backend] Parsed LLaMA output -> Feedback: "${feedback}", Question: "${question}"`);
+    console.log(`[Backend] Parsed Gemini output -> Feedback: "${feedback}", Question: "${question}"`);
 
     const firstAiMessage = question || rawResponse;
 
@@ -144,6 +145,19 @@ const chatInterview = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Interview not found' });
     }
 
+    // ── Check Tier Limits ─────────────────────────────────────────
+    const userDoc = await User.findById(interview.userId);
+    if (userDoc && userDoc.tier === 'free') {
+      const userMsgCount = interview.history.filter(msg => msg.role === 'user').length;
+      if (userMsgCount >= 3) {
+        return res.status(403).json({
+          success: false,
+          limitReached: true,
+          message: 'You have reached the free tier limit of 3 questions. Please upgrade to Premium to continue!'
+        });
+      }
+    }
+
     // Push user message to DB
     interview.history.push({
       role: 'user',
@@ -154,14 +168,13 @@ const chatInterview = async (req, res, next) => {
     const systemPrompt = buildSystemPrompt(resume);
 
     // Build history for API
-    // We only send the last 10 messages to avoid token bloat
     const contextHistory = interview.history.slice(-10).map(msg => ({
       role: msg.role,
       content: msg.content
     }));
 
-    // Call LLM
-    const rawResponse = await generateLlamaResponse(contextHistory, systemPrompt);
+    // Call Gemini
+    const rawResponse = await generateGeminiChatResponse(contextHistory, systemPrompt);
     const { feedback, question } = parseAiOutput(rawResponse);
 
     // Simple heuristc performance tracking logic
@@ -197,4 +210,109 @@ const chatInterview = async (req, res, next) => {
   }
 };
 
-module.exports = { startInterview, chatInterview };
+/**
+ * ── POST /api/interviews/end ──────────────────────────────────
+ * End the interview and run Gemini performance analysis evaluation.
+ */
+const endInterview = async (req, res, next) => {
+  try {
+    const { interviewId } = req.body;
+
+    if (!interviewId) {
+      return res.status(400).json({ success: false, message: 'interviewId is required' });
+    }
+
+    const interview = await Interview.findById(interviewId);
+    if (!interview) {
+      return res.status(404).json({ success: false, message: 'Interview not found' });
+    }
+
+    interview.status = 'completed';
+
+    console.log(`[Backend] Dispatching evaluation request to Gemini AI for Interview ID: ${interviewId}...`);
+    const evaluation = await evaluateInterviewWithGemini(interview.history, interview.role);
+    console.log(`[Backend] \u2714 Received evaluation results successfully.`);
+
+    interview.evaluation = evaluation;
+    await interview.save();
+
+    // ── Update Analytics ──────────────────────────────────────
+    const analytics = await Analytics.findOne({ userId: req.user._id });
+    if (analytics) {
+      analytics.totalInterviews += 1;
+      analytics.totalResponses += interview.history.filter(m => m.role === 'user').length;
+      
+      const score = evaluation.overallScore || 70;
+      analytics.progress.push({ date: new Date(), score: score / 10 }); // map 0-100 to 0-10
+
+      // Recalculate average score
+      const totalScore = analytics.progress.reduce((sum, p) => sum + p.score, 0);
+      analytics.averageScore = Math.round((totalScore / analytics.progress.length) * 10) / 10;
+
+      // Track weak areas
+      if (evaluation.weaknesses && evaluation.weaknesses.length > 0) {
+        evaluation.weaknesses.forEach(w => {
+          if (!analytics.weakAreas.includes(w) && analytics.weakAreas.length < 10) {
+            analytics.weakAreas.push(w);
+          }
+        });
+      }
+
+      await analytics.save();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Interview ended and evaluated successfully',
+      data: evaluation
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * ── GET /api/interviews/summary ──────────────────────────────
+ * Fetch summary analysis of the latest completed interview or specific ID.
+ */
+const getInterviewSummary = async (req, res, next) => {
+  try {
+    const { interviewId } = req.query;
+    let interview;
+
+    if (interviewId) {
+      interview = await Interview.findById(interviewId);
+    } else {
+      // Find the latest completed interview for the user
+      interview = await Interview.findOne({
+        userId: req.user._id,
+        status: 'completed'
+      }).sort({ createdAt: -1 });
+    }
+
+    if (!interview || !interview.evaluation) {
+      return res.status(404).json({
+        success: false,
+        message: 'No completed interview evaluation found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: interview.evaluation,
+      role: interview.role,
+      createdAt: interview.createdAt
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  startInterview,
+  chatInterview,
+  endInterview,
+  getInterviewSummary
+};

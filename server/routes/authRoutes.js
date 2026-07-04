@@ -2,8 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const passport = require('../config/passport');
-const { signup, login } = require('../controllers/authController');
+const { signup, login, upgradeUser } = require('../controllers/authController');
 const { oauthCallback, oauthFailure } = require('../controllers/oauthController');
+const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -40,6 +41,9 @@ router.post('/signup', upload.single('resume'), signup);
 
 // POST /api/auth/login
 router.post('/login', express.json(), login);
+
+// POST /api/auth/upgrade (protected)
+router.post('/upgrade', protect, upgradeUser);
 
 // ── Google OAuth ─────────────────────────────────────────────
 
