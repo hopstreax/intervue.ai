@@ -110,11 +110,14 @@ export default function Dashboard() {
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
-          {stats.map(stat => (
+          {stats.map((stat, idx) => (
             <div
               key={stat.label}
-              className="glass-card rounded-xl p-lg flex items-center gap-md transition-all hover:border-white/15 group"
-              style={{ boxShadow: `0 0 30px ${stat.glow}` }}
+              className="glass-card rounded-xl p-lg flex items-center gap-md transition-all hover-lift group animate-fade-in-up"
+              style={{
+                boxShadow: `0 0 30px ${stat.glow}`,
+                animationDelay: `${idx * 100}ms`
+              }}
             >
               <div className={`w-14 h-14 rounded-xl ${stat.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <span className={`material-symbols-outlined ${stat.color} text-2xl`} style={{ fontVariationSettings: "'FILL' 1" }}>{stat.icon}</span>
@@ -130,7 +133,7 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mb-xl">
           {/* Start Interview CTA */}
-          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group hover:border-primary/20 transition-all" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.08)' }}>
+          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group hover:border-primary/20 transition-all hover-lift animate-fade-in-up delay-100" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.08)' }}>
             <div className="absolute top-0 right-0 p-xl opacity-10 group-hover:opacity-25 transition-opacity duration-500 group-hover:scale-110 origin-top-right transition-transform">
               <span className="material-symbols-outlined text-primary" style={{ fontSize: '130px', fontVariationSettings: "'FILL' 1" }}>psychology</span>
             </div>
@@ -153,7 +156,7 @@ export default function Dashboard() {
           </div>
 
           {/* Last Session */}
-          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group hover:border-secondary/20 transition-all">
+          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group hover:border-secondary/20 transition-all hover-lift animate-fade-in-up delay-200">
             <div className="absolute top-0 right-0 p-xl opacity-10 group-hover:opacity-25 transition-opacity duration-500">
               <span className="material-symbols-outlined text-secondary" style={{ fontSize: '130px' }}>history</span>
             </div>

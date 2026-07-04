@@ -340,7 +340,7 @@ export default function Interview() {
               </div>
             ) : (
               messages.map((msg, idx) => (
-                <div key={idx} className={`flex items-start gap-md md:gap-lg ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                <div key={idx} className={`flex items-start gap-md md:gap-lg animate-fade-in-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                     msg.role === 'user'
                       ? 'bg-surface-container-highest border border-white/10'

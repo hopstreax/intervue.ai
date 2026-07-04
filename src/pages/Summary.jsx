@@ -43,7 +43,7 @@ function RadarChart({ skills }) {
           return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
         })}
         {/* Data polygon */}
-        <polygon points={dataPoints} fill="rgba(192,193,255,0.15)" stroke="#c0c1ff" strokeWidth="2" />
+        <polygon points={dataPoints} className="radar-polygon" fill="rgba(192,193,255,0.15)" stroke="#c0c1ff" strokeWidth="2" />
         {/* Data dots */}
         {axes.map((a, i) => {
           const r = (a.value / 100) * maxR
@@ -275,9 +275,9 @@ export default function Summary() {
 
         {/* Tab: Analysis */}
         {activeTab === 'analysis' && (
-          <div className="grid grid-cols-12 gap-lg">
+          <div className="grid grid-cols-12 gap-lg animate-scale-in">
             {/* Competency Matrix + Radar */}
-            <section className="col-span-12 lg:col-span-7 glass-card rounded-xl p-lg relative overflow-hidden" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.05)' }}>
+            <section className="col-span-12 lg:col-span-7 glass-card rounded-xl p-lg relative overflow-hidden hover-lift" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.05)' }}>
               <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 blur-[60px] rounded-full -mr-10 -mt-10" />
               <div className="flex justify-between items-start mb-lg">
                 <div>
@@ -294,8 +294,8 @@ export default function Summary() {
                 <div className="flex-1 space-y-md w-full">
                   {/* Score breakdown bars */}
                   <div className="space-y-sm">
-                    {scoreBreakdown.map(item => (
-                      <div key={item.label}>
+                    {scoreBreakdown.map((item, idx) => (
+                      <div key={item.label} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs font-mono text-on-surface-variant">{item.label}</span>
                           <span className={`text-xs font-bold font-mono ${item.textColor} tabular-nums`}>{item.score}%</span>
@@ -321,7 +321,7 @@ export default function Summary() {
             </section>
 
             {/* Skill Breakdown */}
-            <section className="col-span-12 lg:col-span-5 glass-card rounded-xl p-lg">
+            <section className="col-span-12 lg:col-span-5 glass-card rounded-xl p-lg hover-lift">
               <h3 className="text-xl font-bold font-display mb-lg">Skill Breakdown</h3>
               <div className="space-y-xl">
                 <div>
@@ -330,8 +330,8 @@ export default function Summary() {
                     Key Strengths
                   </p>
                   <ul className="space-y-md">
-                    {strengths.map(s => (
-                      <li key={s} className="flex items-start gap-sm p-sm rounded-lg hover:bg-white/3 transition-all">
+                    {strengths.map((s, idx) => (
+                      <li key={s} className="flex items-start gap-sm p-sm rounded-lg hover:bg-white/3 transition-all animate-fade-in-up" style={{ animationDelay: `${idx * 150}ms` }}>
                         <span className="material-symbols-outlined text-secondary text-xl mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                         <span className="text-sm text-on-surface">{s}</span>
                       </li>
@@ -344,8 +344,8 @@ export default function Summary() {
                     Areas to Improve
                   </p>
                   <ul className="space-y-md">
-                    {weaknesses.map(w => (
-                      <li key={w} className="flex items-start gap-sm p-sm rounded-lg hover:bg-error/5 transition-all">
+                    {weaknesses.map((w, idx) => (
+                      <li key={w} className="flex items-start gap-sm p-sm rounded-lg hover:bg-error/5 transition-all animate-fade-in-up" style={{ animationDelay: `${(idx + strengths.length) * 150}ms` }}>
                         <span className="material-symbols-outlined text-error text-xl shrink-0">warning</span>
                         <span className="text-sm text-on-surface-variant">{w}</span>
                       </li>
@@ -359,7 +359,7 @@ export default function Summary() {
 
         {/* Tab: Roadmap */}
         {activeTab === 'roadmap' && (
-          <section className="glass-card rounded-xl p-lg relative overflow-hidden">
+          <section className="glass-card rounded-xl p-lg relative overflow-hidden animate-scale-in">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -mr-32 -mt-32" />
             <h3 className="text-xl font-bold font-display mb-xl flex items-center gap-sm">
               <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
@@ -369,7 +369,7 @@ export default function Summary() {
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-outline-variant/30 to-transparent hidden md:block" />
               <div className="space-y-lg relative">
                 {roadmap.map((item, i) => (
-                  <div key={item.day} className="flex flex-col md:flex-row gap-md items-start md:items-center relative group">
+                  <div key={item.day} className="flex flex-col md:flex-row gap-md items-start md:items-center relative group animate-fade-in-up" style={{ animationDelay: `${i * 150}ms` }}>
                     <div className={`hidden md:flex absolute left-4 -translate-x-1/2 w-5 h-5 rounded-full border-4 border-background z-10 transition-all group-hover:scale-125 ${i === 0 ? 'bg-primary' : 'bg-outline-variant group-hover:bg-primary/50'}`}
                       style={i === 0 ? { boxShadow: '0 0 15px rgba(192,193,255,0.4)' } : {}}
                     />
@@ -390,9 +390,9 @@ export default function Summary() {
               </div>
             </div>
             {/* Mentor CTA */}
-            <div className="mt-xl p-lg bg-primary/5 rounded-xl border border-primary/15 flex flex-col md:flex-row items-center justify-between gap-md">
+            <div className="mt-xl p-lg bg-primary/5 rounded-xl border border-primary/15 flex flex-col md:flex-row items-center justify-between gap-md hover-lift">
               <div className="flex items-center gap-md">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high border border-primary/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-surface-container-high border border-primary/20 flex items-center justify-center animate-float">
                   <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>support_agent</span>
                 </div>
                 <div>
@@ -409,14 +409,14 @@ export default function Summary() {
 
         {/* Tab: Study Plan */}
         {activeTab === 'study' && (
-          <section className="glass-card rounded-xl p-lg">
+          <section className="glass-card rounded-xl p-lg animate-scale-in">
             <div className="flex items-center gap-sm mb-lg">
               <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
               <h3 className="text-xl font-bold font-display">Recommended Study Topics</h3>
             </div>
             <div className="space-y-md">
-              {studyTopics.map(topic => (
-                <div key={topic.title} className="group flex items-center justify-between p-lg border border-outline-variant/15 rounded-xl hover:border-primary/30 transition-all cursor-pointer hover:bg-white/2">
+              {studyTopics.map((topic, idx) => (
+                <div key={topic.title} className="group flex items-center justify-between p-lg border border-outline-variant/15 rounded-xl hover:border-primary/30 transition-all cursor-pointer hover:bg-white/2 hover-lift animate-fade-in-up" style={{ animationDelay: `${idx * 150}ms` }}>
                   <div className="flex items-center gap-md">
                     <div className={`w-12 h-12 rounded-xl ${topic.bg} flex items-center justify-center ${topic.color} group-hover:scale-110 transition-transform`}>
                       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{topic.icon}</span>

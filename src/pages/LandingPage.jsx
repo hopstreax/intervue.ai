@@ -105,7 +105,7 @@ export default function LandingPage() {
           <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
 
             {/* Badge */}
-            <div style={{
+            <div className="animate-fade-in-up" style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: '4px 16px', borderRadius: '9999px',
               border: '1px solid #464554', background: '#1c1b1b',
@@ -116,7 +116,7 @@ export default function LandingPage() {
             </div>
 
             {/* Headline */}
-            <h1 className="gradient-text" style={{
+            <h1 className="gradient-text animate-fade-in-up delay-100" style={{
               fontFamily: 'Geist, sans-serif', fontSize: 'clamp(32px, 5vw, 48px)',
               fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.04em',
               margin: 0
@@ -125,12 +125,12 @@ export default function LandingPage() {
             </h1>
 
             {/* Subheadline */}
-            <p style={{ fontSize: '18px', lineHeight: '28px', color: '#c7c4d7', maxWidth: '640px', margin: 0 }}>
+            <p className="animate-fade-in-up delay-200" style={{ fontSize: '18px', lineHeight: '28px', color: '#c7c4d7', maxWidth: '640px', margin: 0 }}>
               Upload your resume and let AI conduct personalized mock interviews based on your skills, projects, and experience.
             </p>
 
             {/* CTAs */}
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '16px' }}>
+            <div className="animate-fade-in-up delay-300" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '16px' }}>
               <button onClick={() => navigate('/signup')}
                 style={{
                   padding: '16px 40px', background: '#c0c1ff', color: '#1000a9',
