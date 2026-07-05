@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { authService, interviewService } from '../services'
 
 export default function Interview() {
@@ -11,7 +12,7 @@ export default function Interview() {
   const [sending, setSending] = useState(false)
   const [ending, setEnding] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
-  const [modelType, setModelType] = useState('gemini') // gemini or chatgpt
+  const [modelType, setModelType] = useState(() => localStorage.getItem('intervue_model') || 'gemini')
   const [paymentStep, setPaymentStep] = useState('plan') // plan, checkout, success
   const [cardName, setCardName] = useState('')
   const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242')
@@ -48,7 +49,9 @@ export default function Interview() {
     isStartingRef.current = true
     setLoading(true); setError('')
     try {
-      const res = await interviewService.start()
+      const selectedModel = localStorage.getItem('intervue_model') || 'gemini'
+      setModelType(selectedModel)
+      const res = await interviewService.start(selectedModel)
       setSession(res.data.interviewId)
       setMessages(res.data.history || [])
     } catch (err) {
@@ -70,51 +73,53 @@ export default function Interview() {
     const userMessage = inputVal.trim()
     setInputVal('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
+
+    // Add user message locally
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setSending(true); setError('')
+
     try {
       const res = await interviewService.chat({ interviewId: session, message: userMessage })
-      setMessages(res.data.history)
-      if (res.data.metrics) setMetrics(res.data.metrics)
-      setQuestionNum(q => q + 1)
-    } catch (err) {
-      if (err.message && (err.message.includes('limit') || err.message.includes('upgrade') || err.message.includes('reached'))) {
-        setShowUpgradeModal(true)
-        // Keep the message in input so they don't lose their typed answer!
-        setInputVal(userMessage)
-        // Remove the temporary user message from display so it is re-sent after upgrading
-        setMessages(prev => prev.slice(0, -1))
-      } else {
-        setError(err.message || 'Failed to send message')
-        setMessages(prev => prev.slice(0, -1))
-        setInputVal(userMessage)
+      if (res.data && res.data.reply) {
+        setMessages(res.data.history || [])
+        if (res.data.metrics) setMetrics(res.data.metrics)
+        setQuestionNum(prev => prev + 1)
       }
+    } catch (err) {
+      if (err.message && err.message.includes('limit reached') || err.message.includes('upgrade')) {
+        setShowUpgradeModal(true)
+      } else {
+        setError(err.message || 'Connection lost. Please try re-sending.')
+      }
+      // Remove last local message if failed to let them retry
+      setMessages(prev => prev.filter((_, idx) => idx !== prev.length - 1))
+      setInputVal(userMessage)
     } finally {
       setSending(false)
     }
   }
 
   const handleEndInterview = async () => {
-    if (!window.confirm('Are you sure you want to end this interview and generate your performance report?')) return
+    if (ending || !session) return
     setEnding(true); setError('')
     try {
       await interviewService.end(session)
       navigate('/summary')
     } catch (err) {
-      setError(err.message || 'Failed to generate report. Please try again.')
-    } finally {
+      setError(err.message || 'Failed to analyze and save interview.')
       setEnding(false)
     }
   }
 
   const handleUpgradePayment = async (e) => {
-    if (e) e.preventDefault()
+    e.preventDefault()
     setProcessingPayment(true); setError('')
     try {
+      await new Promise(resolve => setTimeout(resolve, 2000))
       await authService.upgrade()
       setPaymentStep('success')
     } catch (err) {
-      setError(err.message || 'Payment processing failed. Please try again.')
+      setError(err.message || 'Payment simulation failed')
     } finally {
       setProcessingPayment(false)
     }
@@ -123,132 +128,92 @@ export default function Interview() {
   const handleCloseUpgradeModal = () => {
     setShowUpgradeModal(false)
     setPaymentStep('plan')
-    setError('')
   }
-
-  const handleTextareaChange = (e) => {
-    setInputVal(e.target.value)
-    e.target.style.height = 'auto'
-    e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px'
-  }
-
-  const confidence = Math.min(100, (metrics.clarity / 50) * 100)
-  const totalScore = Math.min(100, metrics.accuracy + metrics.clarity)
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background text-on-surface" style={{ position: 'relative' }}>
+    <div className="bg-background text-on-background h-screen flex overflow-hidden">
 
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* ── SIDEBAR ──────────────────────────────────────────────────── */}
-      <aside className={`flex flex-col h-full bg-surface-container-lowest border-r border-white/5 py-lg z-40 shrink-0 transition-all duration-300
-        fixed md:static
-        ${sidebarOpen ? 'left-0 w-72' : '-left-72 md:left-0 w-72'}
-      `}>
-        {/* Logo */}
-        <div className="px-lg mb-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-sm">
-              <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-              <h1 className="text-2xl font-bold font-display text-primary tracking-tighter">InterviewIQ</h1>
-            </div>
-            <button className="md:hidden text-on-surface-variant hover:text-on-surface" onClick={() => setSidebarOpen(false)}>
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
-          <p className="text-xs font-mono text-on-surface-variant opacity-50 uppercase tracking-widest ml-8 mt-xs">Live Session</p>
-        </div>
-
-        {/* Live Status */}
-        <div className="mx-lg mb-xl">
-          <div className="glass-card rounded-xl p-md" style={{ boxShadow: '0 0 20px rgba(192,193,255,0.1)' }}>
-            <div className="flex items-center gap-sm mb-sm">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              <span className="text-xs font-mono text-primary uppercase tracking-widest">Interview Live</span>
-            </div>
-            <div className="flex items-baseline gap-xs">
-              <span className="text-3xl font-bold font-display text-on-surface tabular-nums">{totalScore}</span>
-              <span className="text-on-surface-variant text-sm">/100</span>
-            </div>
-            <div className="mt-sm">
-              <div className="flex justify-between text-xs font-mono text-on-surface-variant mb-1">
-                <span>Confidence</span>
-                <span className="text-secondary">{confidence > 60 ? 'Optimal' : confidence > 30 ? 'Good' : 'Building'}</span>
-              </div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-secondary to-primary rounded-full transition-all duration-1000" style={{ width: `${confidence}%` }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* New Interview CTA */}
-        <div className="px-lg mb-xl">
-          <Link
-            to="/upload"
-            className="w-full py-md px-lg bg-white/5 border border-white/10 rounded-xl text-on-surface flex items-center justify-center gap-sm hover:bg-white/10 transition-all active:scale-[0.98] text-sm"
+      {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {(sidebarOpen || window.innerWidth >= 768) && (
+          <motion.aside
+            initial={{ x: -260 }}
+            animate={{ x: 0 }}
+            exit={{ x: -260 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className={`flex flex-col h-screen w-64 bg-surface-container-lowest border-r border-white/5 py-lg fixed md:relative left-0 top-0 z-40 shrink-0 ${
+              sidebarOpen ? 'flex' : 'hidden md:flex'
+            }`}
           >
-            <span className="material-symbols-outlined text-base">add</span>
-            New Interview
-          </Link>
-        </div>
+            {/* Logo */}
+            <div className="px-lg mb-xl flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-sm mb-xs">
+                  <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+                  <h1 className="text-2xl font-bold font-display text-primary tracking-tighter">InterviewIQ</h1>
+                </div>
+                <p className="text-xs font-mono text-on-surface-variant opacity-50 uppercase tracking-widest ml-8">Premium Tier</p>
+              </div>
+              <button className="md:hidden text-outline hover:text-on-surface" onClick={() => setSidebarOpen(false)}>
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-sm overflow-y-auto custom-scrollbar">
-          <div className="space-y-xs">
-            <Link to="/dashboard" className="flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all text-sm">
-              <span className="material-symbols-outlined text-base">dashboard</span>
-              <span>Home</span>
-            </Link>
-            <div className="px-lg py-sm mt-sm mb-xs">
-              <span className="text-xs font-mono text-outline-variant uppercase tracking-widest">Recent Sessions</span>
+            {/* Metrics */}
+            <div className="px-lg space-y-md mb-xl">
+              <div>
+                <h2 className="text-xs font-mono text-outline-variant uppercase mb-sm tracking-widest">Session Stats</h2>
+                <div className="glass-panel p-md rounded-xl space-y-md border border-white/5">
+                  <div>
+                    <div className="flex justify-between text-xs text-on-surface-variant mb-xs">
+                      <span>Clarity Rating</span>
+                      <span className="font-mono">{metrics.clarity}%</span>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div className="h-full bg-primary" animate={{ width: `${metrics.clarity}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-xs text-on-surface-variant mb-xs">
+                      <span>Technical Depth</span>
+                      <span className="font-mono">{metrics.accuracy}%</span>
+                    </div>
+                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                      <motion.div className="h-full bg-secondary" animate={{ width: `${metrics.accuracy}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <a href="#" className="flex items-center gap-md px-lg py-md rounded-lg nav-active transition-all text-sm">
-              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>history</span>
-              <span>Current Interview</span>
-              <span className="ml-auto text-xs font-mono text-primary/60">{formatTime(elapsed)}</span>
-            </a>
-            <a href="#" className="flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all text-sm">
-              <span className="material-symbols-outlined text-base">analytics</span>
-              <span>Analytics</span>
-            </a>
-            <a href="#" className="flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-on-surface transition-all text-sm">
-              <span className="material-symbols-outlined text-base">settings</span>
-              <span>Settings</span>
-            </a>
-          </div>
-        </nav>
 
-        {/* Footer */}
-        <div className="px-sm pt-md border-t border-white/5 space-y-xs">
-          <div className="flex items-center gap-md px-lg py-md rounded-xl hover:bg-white/5 transition-all cursor-pointer">
-            <div className="w-9 h-9 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+            <div className="px-sm mt-auto space-y-xs pt-md border-t border-white/5">
+              <button
+                onClick={handleEndInterview}
+                disabled={ending}
+                className="w-full py-md bg-error text-on-error font-bold rounded-lg mb-sm active:scale-98 transition-all hover:shadow-[0_0_20px_rgba(255,180,171,0.2)] flex items-center justify-center gap-xs text-sm"
+              >
+                <span className="material-symbols-outlined text-base">stop_circle</span>
+                {ending ? 'Saving Evaluation...' : 'End & Grade Interview'}
+              </button>
+
+              <div className="flex items-center gap-md px-md py-sm rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
+                </div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-sm font-bold truncate text-on-surface">{user?.name || 'User'}</span>
+                  <span className="text-xs font-mono text-outline-variant truncate">{user?.email || ''}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-bold truncate">{user?.name || 'User'}</span>
-              <span className="text-xs font-mono text-outline-variant truncate">{user?.email || ''}</span>
-            </div>
-          </div>
-          <a href="#" className="flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant hover:bg-white/5 transition-all text-sm">
-            <span className="material-symbols-outlined text-base">help</span>
-            <span>Support</span>
-          </a>
-          <button onClick={handleEndInterview} className="w-full flex items-center gap-md px-lg py-md rounded-lg text-error hover:bg-error/5 transition-all text-sm">
-            <span className="material-symbols-outlined text-base">stop_circle</span>
-            <span>End Interview</span>
-          </button>
-          <button
-            onClick={() => { authService.logout(); navigate('/login') }}
-            className="w-full flex items-center gap-md px-lg py-md rounded-lg text-on-surface-variant hover:bg-error/5 hover:text-error transition-all text-sm">
-            <span className="material-symbols-outlined text-base">logout</span>
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Backdrop for mobile menu */}
+      {sidebarOpen && (
+        <div className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-30" onClick={() => setSidebarOpen(false)} />
+      )}
 
       {/* ── MAIN CHAT AREA ───────────────────────────────────────────── */}
       <main className="relative flex-1 flex flex-col h-full bg-background overflow-hidden">
@@ -261,35 +226,23 @@ export default function Interview() {
               <span className="material-symbols-outlined">menu</span>
             </button>
 
+            {/* Active Model Badge */}
+            <div className="hidden md:inline-flex items-center gap-xs px-sm py-xs rounded-full border border-primary/20 bg-primary/5 text-xs font-mono text-primary">
+              <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1", fontSize: '14px' }}>
+                {modelType === 'gpt' ? 'smart_toy' : 'auto_awesome'}
+              </span>
+              {modelType === 'gpt' ? 'GPT-4o' : 'Gemini'}
+            </div>
+
             {/* Progress */}
             <div className="flex flex-col">
               <span className="text-xs font-mono text-outline-variant uppercase mb-0.5 hidden md:block">Progress</span>
-              <div className="flex items-center gap-xs">
-                <span className="text-sm md:text-base font-bold text-primary">Q{questionNum}</span>
-                <span className="text-xs text-on-surface-variant hidden md:inline">/ 10</span>
-              </div>
-            </div>
-
-            {/* Confidence bar — desktop */}
-            <div className="hidden md:flex flex-col min-w-[140px]">
-              <div className="flex justify-between items-end mb-1">
-                <span className="text-xs font-mono text-outline-variant uppercase">Confidence</span>
-                <span className="text-xs font-mono text-secondary">{confidence > 60 ? 'Optimal' : confidence > 30 ? 'Good' : 'Building'}</span>
-              </div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-secondary to-primary rounded-full transition-all duration-1000" style={{ width: `${confidence}%` }} />
-              </div>
-            </div>
-          </div>
-
-          {/* Center Score — desktop */}
-          <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 flex-col items-center">
-            <span className="text-xs font-mono text-outline-variant uppercase mb-0.5">Current Score</span>
-            <div className="flex items-center gap-sm">
-              <span className="text-3xl font-bold font-display text-on-surface tabular-nums">{totalScore}</span>
-              <div className="flex items-center text-primary text-xs font-bold bg-primary/20 px-2 py-0.5 rounded-full">
-                <span className="material-symbols-outlined text-sm">arrow_upward</span>
-                {metrics.questionsAnswered}
+              <div className="flex items-center gap-sm">
+                <span className="text-sm font-semibold text-on-surface">Question {questionNum}</span>
+                <div className="flex items-center text-primary text-xs font-bold bg-primary/20 px-2 py-0.5 rounded-full">
+                  <span className="material-symbols-outlined text-sm">arrow_upward</span>
+                  {metrics.questionsAnswered}
+                </div>
               </div>
             </div>
           </div>
@@ -302,7 +255,7 @@ export default function Interview() {
             </div>
             <button
               onClick={handleEndInterview}
-              className="flex items-center gap-1 md:gap-sm px-3 py-2 rounded-lg bg-error-container text-on-error-container text-xs font-mono hover:brightness-110 transition-all"
+              className="flex items-center gap-1 md:gap-sm px-3 py-2 rounded-lg bg-error-container text-on-error-container text-xs font-mono hover:brightness-110 transition-all animate-pulse"
             >
               <span className="material-symbols-outlined text-sm">stop_circle</span>
               <span className="hidden md:inline">End Interview</span>
@@ -339,46 +292,64 @@ export default function Interview() {
                 <p className="text-on-surface-variant font-mono text-sm">Waiting for interview to begin...</p>
               </div>
             ) : (
-              messages.map((msg, idx) => (
-                <div key={idx} className={`flex items-start gap-md md:gap-lg animate-fade-in-up ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    msg.role === 'user'
-                      ? 'bg-surface-container-highest border border-white/10'
-                      : 'bg-primary-container'
-                  }`} style={msg.role !== 'user' ? { boxShadow: '0 0 20px rgba(192,193,255,0.2)' } : {}}>
-                    <span className="material-symbols-outlined text-sm" style={msg.role !== 'user' ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                      {msg.role === 'user' ? 'person' : 'smart_toy'}
-                    </span>
-                  </div>
-                  <div className="flex-1 pt-1 min-w-0">
-                    <h3 className="text-xs font-mono text-outline-variant uppercase mb-sm tracking-widest">
-                      {msg.role === 'user' ? (user?.name || 'You') : 'InterviewIQ AI'}
-                    </h3>
-                    {msg.role === 'assistant' && msg.feedback && (
-                      <div className="mb-sm p-sm rounded-lg bg-secondary/5 border border-secondary/20 text-xs text-secondary font-mono italic">
-                        "{msg.feedback}"
+              <div className="space-y-xl">
+                <AnimatePresence initial={false}>
+                  {messages.map((msg, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                      className={`flex items-start gap-md md:gap-lg ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                    >
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                        msg.role === 'user'
+                          ? 'bg-surface-container-highest border border-white/10'
+                          : 'bg-primary-container'
+                      }`} style={msg.role !== 'user' ? { boxShadow: '0 0 20px rgba(192,193,255,0.2)' } : {}}>
+                        <span className="material-symbols-outlined text-sm" style={msg.role !== 'user' ? { fontVariationSettings: "'FILL' 1" } : {}}>
+                          {msg.role === 'user' ? 'person' : 'smart_toy'}
+                        </span>
                       </div>
-                    )}
-                    <div className={`text-base md:text-lg leading-relaxed ${
-                      msg.role === 'user' ? 'text-on-surface-variant' : 'text-on-surface'
-                    }`}>
-                      {msg.content}
-                    </div>
-                  </div>
-                </div>
-              ))
+                      <div className="flex-1 pt-1 min-w-0">
+                        <h3 className="text-xs font-mono text-outline-variant uppercase mb-sm tracking-widest">
+                          {msg.role === 'user' ? (user?.name || 'You') : 'InterviewIQ AI'}
+                        </h3>
+                        {msg.role === 'assistant' && msg.feedback && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="mb-sm p-sm rounded-lg bg-secondary/5 border border-secondary/20 text-xs text-secondary font-mono italic"
+                          >
+                            "{msg.feedback}"
+                          </motion.div>
+                        )}
+                        <div className={`text-base md:text-lg leading-relaxed ${
+                          msg.role === 'user' ? 'text-on-surface-variant' : 'text-on-surface'
+                        }`}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             )}
 
             {/* Sending indicator */}
             {sending && (
-              <div className="flex items-center gap-md py-md px-lg bg-surface-container-low rounded-2xl w-fit border border-white/5">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-md py-md px-lg bg-surface-container-low rounded-2xl w-fit border border-white/5"
+              >
                 <div className="flex gap-1">
                   <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
                 <span className="text-xs font-mono text-on-surface-variant">Analyzing sentiment & technical depth...</span>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
@@ -388,100 +359,88 @@ export default function Interview() {
           <div className="max-w-3xl mx-auto">
             {error && (
               <div className="mb-sm flex items-center gap-sm p-sm rounded-lg bg-error-container/30 border border-error/30 text-error text-xs font-mono">
-                <span className="material-symbols-outlined text-sm">warning</span>
+                <span className="material-symbols-outlined text-sm">error</span>
                 {error}
               </div>
             )}
-            <form onSubmit={handleSend}>
-              <div className="glass-panel border-white/10 rounded-2xl p-md transition-all focus-within:border-primary/30 focus-within:shadow-[0_0_30px_rgba(192,193,255,0.1)]">
-                <textarea
-                  ref={textareaRef}
-                  value={inputVal}
-                  onChange={handleTextareaChange}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(e) }
-                  }}
-                  disabled={sending || loading}
-                  placeholder="Type your answer here... (Enter to submit, Shift+Enter for new line)"
-                  className="w-full bg-transparent border-none outline-none text-on-surface placeholder:text-outline-variant resize-none text-base py-1 disabled:opacity-50 min-h-[44px] leading-relaxed"
-                  rows={1}
-                  style={{ maxHeight: '160px' }}
-                />
-                <div className="flex items-center justify-between mt-sm pt-sm border-t border-white/5">
-                  <div className="flex items-center gap-md">
-                    <button type="button" className="text-outline-variant hover:text-on-surface transition-colors p-1 rounded-lg hover:bg-white/5">
-                      <span className="material-symbols-outlined text-xl">attach_file</span>
-                    </button>
-                    <button type="button" className="text-outline-variant hover:text-secondary transition-colors flex items-center gap-sm group p-1 rounded-lg hover:bg-white/5">
-                      <span className="material-symbols-outlined text-xl">mic</span>
-                      <span className="text-xs font-mono opacity-0 group-hover:opacity-100 transition-opacity">Voice</span>
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-sm">
-                    <span className="text-xs font-mono text-outline-variant hidden md:block">{inputVal.length} chars</span>
-                    <button
-                      type="submit"
-                      disabled={!inputVal.trim() || sending || loading}
-                      className="bg-primary text-on-primary font-bold px-lg py-sm rounded-xl flex items-center gap-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 text-sm"
-                    >
-                      <span className="hidden md:inline">Submit</span>
-                      <span className="material-symbols-outlined text-base">send</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <p className="text-center mt-sm text-xs font-mono text-outline-variant opacity-50">
-                Press <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">Enter</kbd> to submit · <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">Shift+Enter</kbd> for new line
-              </p>
+
+            <form onSubmit={handleSend} className="relative flex items-end gap-sm md:gap-md bg-surface-container-lowest border border-white/5 rounded-2xl p-sm focus-within:border-primary/30 transition-all">
+              <textarea
+                ref={textareaRef}
+                value={inputVal}
+                onChange={e => {
+                  setInputVal(e.target.value)
+                  e.target.style.height = 'auto'
+                  e.target.style.height = `${e.target.scrollHeight}px`
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend(e)
+                  }
+                }}
+                placeholder="Type your response here... (Press Enter to send)"
+                rows={1}
+                className="flex-1 bg-transparent border-0 outline-none resize-none max-h-36 py-sm px-sm md:px-md text-on-surface placeholder:text-outline-variant custom-scrollbar text-sm md:text-base leading-relaxed"
+              />
+              <motion.button
+                type="submit"
+                disabled={!inputVal.trim() || sending}
+                whileHover={inputVal.trim() ? { scale: 1.05 } : {}}
+                whileTap={inputVal.trim() ? { scale: 0.95 } : {}}
+                className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 disabled:opacity-30 disabled:scale-100 transition-all"
+              >
+                <span className="material-symbols-outlined text-base">send</span>
+              </motion.button>
             </form>
+            <p className="text-center mt-xs text-[10px] font-mono text-outline-variant">
+              Keep it professional. The AI evaluates confidence, accuracy, and structure.
+            </p>
           </div>
         </div>
       </main>
 
-      {/* ── GENERATING AI REPORT OVERLAY ────────────────────────────── */}
-      {ending && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-center p-xl">
-          <div className="relative w-20 h-20 mb-lg">
-            <div className="absolute inset-0 rounded-full border-4 border-white/5" />
-            <div className="absolute inset-0 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin" />
-          </div>
-          <h2 className="text-2xl font-bold font-display text-on-surface mb-xs">Generating Your Report</h2>
-          <p className="text-sm text-on-surface-variant max-w-sm">
-            Gemini is analyzing your answers, evaluating communication clarity, and structuring your custom study roadmap...
-          </p>
-        </div>
-      )}
+      {/* ── UPGRADE/PAYMENT MODAL ────────────────────────────────────── */}
+      <AnimatePresence>
+        {showUpgradeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/80 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="w-full max-w-[500px] bg-surface-container-lowest border border-white/10 rounded-2xl p-xl shadow-2xl flex flex-col gap-lg"
+            >
+              {/* Close button */}
+              <div className="flex justify-end -mb-xl">
+                <button
+                  onClick={handleCloseUpgradeModal}
+                  className="text-outline hover:text-on-surface transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
 
-      {/* ── PREMIUM UPGRADE MODAL ────────────────────────────────────── */}
-      {showUpgradeModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-[90] flex items-center justify-center p-md">
-          <div className="glass-card rounded-2xl border border-white/10 max-w-lg w-full overflow-hidden shadow-2xl relative" style={{ boxShadow: '0 0 80px rgba(192,193,255,0.1)' }}>
-            
-            {/* Header / Close button (only show close button if not successful yet) */}
-            {paymentStep !== 'success' && (
-              <button
-                onClick={handleCloseUpgradeModal}
-                className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface p-1 rounded-full hover:bg-white/5 transition-colors z-10"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            )}
-
-            {/* Inner modal body */}
-            <div className="p-xl flex flex-col gap-lg">
-              
               {/* STEP 1: PLAN SELECTOR */}
               {paymentStep === 'plan' && (
                 <>
                   <div className="text-center space-y-xs">
-                    <span className="inline-block px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-mono text-primary uppercase font-bold tracking-wider">Upgrade Premium</span>
-                    <h2 className="text-2xl font-bold font-display text-on-surface tracking-tight">Unlock Unlimited AI Interviews</h2>
-                    <p className="text-sm text-on-surface-variant">You've reached the free tier limit of 3 questions. Choose your preferences to continue.</p>
+                    <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center mx-auto mb-sm">
+                      <span className="material-symbols-outlined text-primary text-2xl font-bold animate-pulse">workspace_premium</span>
+                    </div>
+                    <h2 className="text-2xl font-bold font-display text-on-surface tracking-tighter">Choose Your AI Power</h2>
+                    <p className="text-xs text-on-surface-variant max-w-xs mx-auto">
+                      Upgrade to Premium to continue. Swap models mid-interview and get infinite questions.
+                    </p>
                   </div>
 
-                  <div className="space-y-md">
-                    {/* Model Select */}
-                    <label className="text-xs font-mono text-outline-variant uppercase">1. Select AI Model Engine</label>
+                  <div className="space-y-md mt-sm">
+                    {/* Models Grid */}
                     <div className="grid grid-cols-2 gap-sm">
                       <button
                         onClick={() => setModelType('gemini')}
@@ -534,13 +493,15 @@ export default function Interview() {
                         <span className="text-sm text-on-surface-variant">/mo</span>
                       </div>
                     </div>
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => setPaymentStep('checkout')}
-                      className="bg-primary text-on-primary font-bold px-lg py-md rounded-xl hover:scale-105 active:scale-95 transition-all text-sm flex items-center gap-xs"
+                      className="bg-primary text-on-primary font-bold px-lg py-md rounded-xl hover:shadow-[0_0_30px_rgba(192,193,255,0.3)] transition-all text-sm flex items-center gap-xs"
                     >
                       Choose Plan
                       <span className="material-symbols-outlined text-base">arrow_forward</span>
-                    </button>
+                    </motion.button>
                   </div>
                 </>
               )}
@@ -623,14 +584,16 @@ export default function Interview() {
                     >
                       Back
                     </button>
-                    <button
+                    <motion.button
                       type="submit"
                       disabled={processingPayment}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       className="flex-1 py-md bg-primary text-on-primary font-bold rounded-xl hover:opacity-90 active:scale-95 transition-all text-sm flex items-center justify-center gap-xs"
                     >
                       {processingPayment ? 'Processing...' : 'Complete Payment'}
                       <span className="material-symbols-outlined text-base">lock</span>
-                    </button>
+                    </motion.button>
                   </div>
                 </form>
               )}
@@ -638,9 +601,14 @@ export default function Interview() {
               {/* STEP 3: CELEBRATION SUCCESS PAGE */}
               {paymentStep === 'success' && (
                 <div className="text-center py-md flex flex-col items-center gap-md">
-                  <div className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center animate-bounce">
+                  <motion.div
+                    initial={{ scale: 0.5, rotate: -45 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+                    className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center"
+                  >
                     <span className="material-symbols-outlined text-primary text-3xl font-bold">verified</span>
-                  </div>
+                  </motion.div>
 
                   <div className="space-y-xs">
                     <h2 className="text-2xl font-bold font-display text-on-surface">Payment Successful!</h2>
@@ -649,20 +617,21 @@ export default function Interview() {
                     </p>
                   </div>
 
-                  <button
+                  <motion.button
                     onClick={handleCloseUpgradeModal}
+                    whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(192,193,255,0.4)' }}
+                    whileTap={{ scale: 0.98 }}
                     className="w-full mt-lg py-md bg-primary text-on-primary font-bold rounded-xl active:scale-95 transition-all text-sm flex items-center justify-center gap-xs shadow-lg shadow-primary/20"
                   >
                     Unlock & Continue Interview
                     <span className="material-symbols-outlined text-base font-bold">arrow_forward</span>
-                  </button>
+                  </motion.button>
                 </div>
               )}
-
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

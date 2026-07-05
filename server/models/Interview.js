@@ -37,6 +37,11 @@ const interviewSchema = new mongoose.Schema(
       enum: ['active', 'completed'],
       default: 'active',
     },
+    model: {
+      type: String,
+      enum: ['gemini', 'gpt'],
+      default: 'gemini',
+    },
     history: {
       type: [messageSchema],
       default: [],

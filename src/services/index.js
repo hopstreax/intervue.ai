@@ -153,10 +153,11 @@ export const authService = {
 };
 
 // ── Resume Upload Service ────────────────────────────────────
-export const analyzeResume = async (file) => {
+export const analyzeResume = async (file, model = 'gemini') => {
   const token = getToken();
   const formData = new FormData();
   formData.append('resume', file);
+  formData.append('model', model);
 
   const res = await fetch(`${API_BASE}/upload`, {
     method: 'POST',
@@ -177,9 +178,10 @@ export const interviewService = {
    * POST /api/interviews/start
    * Start a new chat interview session. (10s timeout injected)
    */
-  start: async () => {
+  start: async (model = 'gemini') => {
     return apiFetch('/interviews/start', {
       method: 'POST',
+      body: JSON.stringify({ model }),
     }, 10000); // 10 second timeout
   },
 

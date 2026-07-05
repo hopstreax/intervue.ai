@@ -2,7 +2,7 @@ const Interview = require('../models/Interview');
 const Resume = require('../models/Resume');
 const Analytics = require('../models/Analytics');
 const User = require('../models/User');
-const { generateGeminiChatResponse, evaluateInterviewWithGemini } = require('../utils/gemini');
+const { getEngine } = require('../utils/ai');
 
 /**
  * Helper to build the master system prompt
@@ -69,7 +69,9 @@ const parseAiOutput = (text) => {
 const startInterview = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    console.log(`\n[Backend] \u2192 Starting intervew for User ID: ${userId}`);
+    const model = req.body.model || 'gemini'; // 'gemini' or 'gpt'
+    const engine = getEngine(model);
+    console.log(`\n[Backend] \u2192 Starting interview for User ID: ${userId} using ${engine.name}`);
 
     // Get the most recent resume
     const resume = await Resume.findOne({ userId }).sort({ createdAt: -1 }).lean();
@@ -82,11 +84,12 @@ const startInterview = async (req, res, next) => {
     // Create the interview doc
     const interview = await Interview.create({
       userId,
-      role: 'Software Engineer', // Defaulting for now
+      role: 'Software Engineer',
+      model,
       history: [],
       status: 'active'
     });
-    console.log(`[Backend] Created new Interview DB document: ${interview._id}`);
+    console.log(`[Backend] Created new Interview DB document: ${interview._id} (model: ${model})`);
 
     const systemPrompt = buildSystemPrompt(resume);
 
@@ -95,10 +98,10 @@ const startInterview = async (req, res, next) => {
       { role: 'user', content: 'Begin the interview. Welcome me based on my skills and ask the first behavioral or technical question.' }
     ];
 
-    console.log(`[Backend] Dispatching initial prompt request to Gemini AI...`);
+    console.log(`[Backend] Dispatching initial prompt request to ${engine.name}...`);
     const t0 = Date.now();
-    const rawResponse = await generateGeminiChatResponse(initialPrompt, systemPrompt);
-    console.log(`[Backend] \u2714 Received response from Gemini in ${Date.now() - t0}ms`);
+    const rawResponse = await engine.generateChatResponse(initialPrompt, systemPrompt);
+    console.log(`[Backend] \u2714 Received response from ${engine.name} in ${Date.now() - t0}ms`);
     
     const { feedback, question } = parseAiOutput(rawResponse);
     console.log(`[Backend] Parsed Gemini output -> Feedback: "${feedback}", Question: "${question}"`);
@@ -173,8 +176,9 @@ const chatInterview = async (req, res, next) => {
       content: msg.content
     }));
 
-    // Call Gemini
-    const rawResponse = await generateGeminiChatResponse(contextHistory, systemPrompt);
+    // Call the AI engine associated with this interview
+    const engine = getEngine(interview.model || 'gemini');
+    const rawResponse = await engine.generateChatResponse(contextHistory, systemPrompt);
     const { feedback, question } = parseAiOutput(rawResponse);
 
     // Simple heuristc performance tracking logic
@@ -229,9 +233,10 @@ const endInterview = async (req, res, next) => {
 
     interview.status = 'completed';
 
-    console.log(`[Backend] Dispatching evaluation request to Gemini AI for Interview ID: ${interviewId}...`);
-    const evaluation = await evaluateInterviewWithGemini(interview.history, interview.role);
-    console.log(`[Backend] \u2714 Received evaluation results successfully.`);
+    const engine = getEngine(interview.model || 'gemini');
+    console.log(`[Backend] Dispatching evaluation request to ${engine.name} for Interview ID: ${interviewId}...`);
+    const evaluation = await engine.evaluateInterview(interview.history, interview.role);
+    console.log(`[Backend] \u2714 Received evaluation results from ${engine.name} successfully.`);
 
     interview.evaluation = evaluation;
     await interview.save();

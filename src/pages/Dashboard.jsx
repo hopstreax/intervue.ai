@@ -1,6 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, useInView, useMotionValue, useTransform, animate } from 'framer-motion'
 import { authService } from '../services'
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 }
+  }
+}
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+  }
+}
+
+/* ── Animated Counter Component ───────────────────────────────── */
+function AnimatedCounter({ value, suffix = '', duration = 1.5 }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true })
+  const motionVal = useMotionValue(0)
+  const rounded = useTransform(motionVal, Math.round)
+  const [display, setDisplay] = useState('0')
+
+  useEffect(() => {
+    if (!isInView) return
+    const numericValue = parseInt(value, 10)
+    const controls = animate(motionVal, numericValue, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+    })
+    const unsub = rounded.on('change', v => setDisplay(String(v)))
+    return () => { controls.stop(); unsub() }
+  }, [isInView, value])
+
+  return <span ref={ref}>{display}{suffix}</span>
+}
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -16,9 +56,9 @@ export default function Dashboard() {
   ]
 
   const stats = [
-    { label: 'Sessions Completed', value: '12', icon: 'check_circle',         color: 'text-primary',   glow: 'rgba(192,193,255,0.15)',  bg: 'bg-primary/10' },
-    { label: 'Avg. Score',         value: '82',  icon: 'bar_chart',            color: 'text-secondary', glow: 'rgba(76,215,246,0.15)',   bg: 'bg-secondary/10' },
-    { label: 'Study Streak',       value: '5d',  icon: 'local_fire_department', color: 'text-tertiary', glow: 'rgba(255,183,131,0.15)',  bg: 'bg-tertiary/10' },
+    { label: 'Sessions Completed', value: '12', icon: 'check_circle',         color: 'text-primary',   glow: 'rgba(192,193,255,0.12)',  bg: 'bg-primary/10' },
+    { label: 'Avg. Score',         value: '82',  icon: 'bar_chart',            color: 'text-secondary', glow: 'rgba(76,215,246,0.12)',   bg: 'bg-secondary/10' },
+    { label: 'Study Streak',       value: '5',   suffix: 'd',                  icon: 'local_fire_department', color: 'text-tertiary', glow: 'rgba(255,183,131,0.12)',  bg: 'bg-tertiary/10' },
   ]
 
   const features = [
@@ -40,7 +80,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex">
+    <div className="bg-background text-on-background min-h-screen flex overflow-hidden">
 
       {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
       <aside className="hidden md:flex flex-col h-screen w-64 bg-surface-container-lowest border-r border-white/5 py-lg fixed left-0 top-0 z-40">
@@ -69,12 +109,14 @@ export default function Dashboard() {
         </nav>
 
         <div className="px-sm mt-auto pt-md border-t border-white/5 space-y-xs">
-          <button
+          <motion.button
+            whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(192,193,255,0.2)' }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => navigate('/upload')}
-            className="w-full py-md bg-primary text-on-primary font-bold rounded-lg mb-sm active:scale-[0.98] transition-transform hover:shadow-[0_0_20px_rgba(192,193,255,0.2)]"
+            className="w-full py-md bg-primary text-on-primary font-bold rounded-lg mb-sm active:scale-[0.98] transition-transform"
           >
             Start New Interview
-          </button>
+          </motion.button>
           <div className="flex items-center gap-md px-md py-sm rounded-xl hover:bg-white/5 transition-all cursor-pointer">
             <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
@@ -94,10 +136,14 @@ export default function Dashboard() {
       </aside>
 
       {/* ── MAIN CONTENT ─────────────────────────────────────────────── */}
-      <main className="flex-1 md:ml-64 px-lg md:px-xl py-xl max-w-[1280px] mx-auto w-full pb-24 md:pb-xl">
-
+      <motion.main
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 md:ml-64 px-lg md:px-xl py-xl max-w-[1280px] mx-auto w-full pb-24 md:pb-xl"
+      >
         {/* Header */}
-        <header className="mb-xl">
+        <motion.header variants={cardVariants} className="mb-xl">
           <div className="inline-flex items-center gap-sm px-md py-xs rounded-full border border-primary/30 bg-primary/10 text-xs font-mono text-primary mb-md">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             AI Ready — Session slot available
@@ -106,34 +152,42 @@ export default function Dashboard() {
             Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''} 👋
           </h2>
           <p className="text-lg text-on-surface-variant mt-xs">Ready to sharpen your interview skills today?</p>
-        </header>
+        </motion.header>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
+        <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
           {stats.map((stat, idx) => (
-            <div
+            <motion.div
               key={stat.label}
-              className="glass-card rounded-xl p-lg flex items-center gap-md transition-all hover-lift group animate-fade-in-up"
+              variants={cardVariants}
+              whileHover={{ scale: 1.03, borderColor: 'rgba(255,255,255,0.1)' }}
+              className="glass-card rounded-xl p-lg flex items-center gap-md transition-all group cursor-default"
               style={{
-                boxShadow: `0 0 30px ${stat.glow}`,
-                animationDelay: `${idx * 100}ms`
+                boxShadow: `0 0 30px ${stat.glow}`
               }}
             >
               <div className={`w-14 h-14 rounded-xl ${stat.bg} flex items-center justify-center group-hover:scale-110 transition-transform`}>
                 <span className={`material-symbols-outlined ${stat.color} text-2xl`} style={{ fontVariationSettings: "'FILL' 1" }}>{stat.icon}</span>
               </div>
               <div>
-                <div className={`text-4xl font-bold font-display ${stat.color} tabular-nums`}>{stat.value}</div>
+                <div className={`text-4xl font-bold font-display ${stat.color} tabular-nums`}>
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix || ''} />
+                </div>
                 <div className="text-xs font-mono text-on-surface-variant mt-xs">{stat.label}</div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mb-xl">
           {/* Start Interview CTA */}
-          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group hover:border-primary/20 transition-all hover-lift animate-fade-in-up delay-100" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.08)' }}>
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ scale: 1.02, borderColor: 'rgba(192,193,255,0.2)' }}
+            className="glass-card rounded-2xl p-xl relative overflow-hidden group transition-all"
+            style={{ boxShadow: '0 0 40px rgba(192,193,255,0.08)' }}
+          >
             <div className="absolute top-0 right-0 p-xl opacity-10 group-hover:opacity-25 transition-opacity duration-500 group-hover:scale-110 origin-top-right transition-transform">
               <span className="material-symbols-outlined text-primary" style={{ fontSize: '130px', fontVariationSettings: "'FILL' 1" }}>psychology</span>
             </div>
@@ -145,18 +199,24 @@ export default function Dashboard() {
               </div>
               <h3 className="font-display text-2xl font-bold text-on-background mb-sm">Start a Mock Interview</h3>
               <p className="text-on-surface-variant mb-xl leading-relaxed">Upload your resume and get a personalized AI-powered interview session in under 60 seconds.</p>
-              <button
+              <motion.button
                 onClick={() => navigate('/upload')}
-                className="px-xl py-md bg-primary text-on-primary font-bold rounded-xl hover:shadow-[0_0_30px_rgba(192,193,255,0.3)] active:scale-95 transition-all flex items-center gap-sm"
+                whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(192,193,255,0.3)' }}
+                whileTap={{ scale: 0.98 }}
+                className="px-xl py-md bg-primary text-on-primary font-bold rounded-xl active:scale-95 transition-all flex items-center gap-sm"
               >
                 <span className="material-symbols-outlined">upload_file</span>
                 Upload Resume & Begin
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Last Session */}
-          <div className="glass-card rounded-2xl p-xl relative overflow-hidden group hover:border-secondary/20 transition-all hover-lift animate-fade-in-up delay-200">
+          <motion.div
+            variants={cardVariants}
+            whileHover={{ scale: 1.02, borderColor: 'rgba(76,215,246,0.2)' }}
+            className="glass-card rounded-2xl p-xl relative overflow-hidden group transition-all"
+          >
             <div className="absolute top-0 right-0 p-xl opacity-10 group-hover:opacity-25 transition-opacity duration-500">
               <span className="material-symbols-outlined text-secondary" style={{ fontSize: '130px' }}>history</span>
             </div>
@@ -171,26 +231,33 @@ export default function Dashboard() {
                 <span className="text-on-surface-variant text-lg">/100</span>
                 <span className="ml-xs px-sm py-xs bg-primary/20 text-primary text-xs font-mono rounded-full font-bold">+4pts</span>
               </div>
-              <button
+              <motion.button
                 onClick={() => navigate('/summary')}
-                className="px-xl py-md border border-outline-variant/30 text-on-surface font-bold rounded-xl hover:bg-white/5 active:scale-95 transition-all flex items-center gap-sm"
+                whileHover={{ scale: 1.03, backgroundColor: 'rgba(255,255,255,0.08)' }}
+                whileTap={{ scale: 0.98 }}
+                className="px-xl py-md border border-outline-variant/30 text-on-surface font-bold rounded-xl active:scale-95 transition-all flex items-center gap-sm"
               >
                 <span className="material-symbols-outlined">analytics</span>
                 View Full Report
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Recent Sessions */}
-        <section className="mb-xl">
+        <motion.section variants={cardVariants} className="mb-xl">
           <div className="flex items-center justify-between mb-lg">
             <h3 className="font-display text-2xl font-bold text-on-background">Recent Sessions</h3>
             <button className="text-xs font-mono text-primary hover:underline">View all →</button>
           </div>
           <div className="glass-card rounded-xl overflow-hidden">
             {recentSessions.map((session, i) => (
-              <div key={i} className={`flex items-center justify-between px-lg py-md hover:bg-white/3 transition-all cursor-pointer group ${i !== recentSessions.length - 1 ? 'border-b border-white/5' : ''}`}>
+              <motion.div
+                key={i}
+                whileHover={{ backgroundColor: 'rgba(255,255,255,0.04)' }}
+                className={`flex items-center justify-between px-lg py-md transition-all cursor-pointer group ${i !== recentSessions.length - 1 ? 'border-b border-white/5' : ''}`}
+                onClick={() => navigate('/summary')}
+              >
                 <div className="flex items-center gap-md">
                   <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center">
                     <span className="material-symbols-outlined text-on-surface-variant text-base" style={{ fontVariationSettings: "'FILL' 1" }}>work_history</span>
@@ -210,26 +277,30 @@ export default function Dashboard() {
                   }`}>{session.trend}pts</span>
                   <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors text-base">arrow_forward</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Features Bento */}
-        <section>
+        <motion.section variants={cardVariants}>
           <h3 className="font-display text-2xl font-bold text-on-background mb-lg">Platform Features</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-lg">
             {features.map(f => (
-              <div key={f.title} className={`glass-card rounded-xl p-lg group hover:${f.border} transition-all cursor-default`}>
+              <motion.div
+                key={f.title}
+                whileHover={{ y: -4, borderColor: 'rgba(255,255,255,0.12)', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
+                className={`glass-card rounded-xl p-lg group transition-all cursor-default`}
+              >
                 <div className="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center mb-md group-hover:scale-110 transition-transform">
                   <span className={`material-symbols-outlined ${f.color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{f.icon}</span>
                 </div>
                 <h4 className="font-display text-base font-bold text-on-background mb-sm">{f.title}</h4>
                 <p className="text-sm text-on-surface-variant leading-relaxed">{f.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
-        </section>
+        </motion.section>
 
         {/* Footer */}
         <footer className="w-full py-xl mt-20 flex flex-col md:flex-row justify-between items-center gap-md border-t border-white/5">
@@ -243,7 +314,7 @@ export default function Dashboard() {
             ))}
           </div>
         </footer>
-      </main>
+      </motion.main>
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-md z-50">

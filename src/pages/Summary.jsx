@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { authService, interviewService } from '../services'
 
 function RadarChart({ skills }) {
-  // 5-axis radar with actual skill values
   const axes = [
     { label: 'Technical',    angle: -90,  value: skills.technical },
     { label: 'Comm.',        angle: -18,  value: skills.comm },
@@ -43,12 +43,32 @@ function RadarChart({ skills }) {
           return <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
         })}
         {/* Data polygon */}
-        <polygon points={dataPoints} className="radar-polygon" fill="rgba(192,193,255,0.15)" stroke="#c0c1ff" strokeWidth="2" />
+        <motion.polygon
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          points={dataPoints}
+          className="radar-polygon"
+          fill="rgba(192,193,255,0.15)"
+          stroke="#c0c1ff"
+          strokeWidth="2"
+        />
         {/* Data dots */}
         {axes.map((a, i) => {
           const r = (a.value / 100) * maxR
           const { x, y } = toXY(a.angle, r)
-          return <circle key={i} cx={x} cy={y} r="3" fill="#c0c1ff" />
+          return (
+            <motion.circle
+              key={i}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.3 + i * 0.08, type: 'spring' }}
+              cx={x}
+              cy={y}
+              r="3"
+              fill="#c0c1ff"
+            />
+          )
         })}
       </svg>
       {/* Labels */}
@@ -70,7 +90,7 @@ function RadarChart({ skills }) {
 export default function Summary() {
   const navigate = useNavigate()
   const user = authService.getUser()
-  
+
   const [evalData, setEvalData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('analysis')
@@ -227,8 +247,12 @@ export default function Summary() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 md:ml-64 px-lg md:px-xl py-xl max-w-[1280px] mx-auto w-full pb-24 md:pb-xl">
-
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="flex-1 md:ml-64 px-lg md:px-xl py-xl max-w-[1280px] mx-auto w-full pb-24 md:pb-xl"
+      >
         {/* Header */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-md mb-xl">
           <div>
@@ -261,186 +285,254 @@ export default function Summary() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-sm px-lg py-sm rounded-t-lg text-sm font-medium transition-all border-b-2 -mb-px ${
+              className={`flex items-center gap-sm px-lg py-sm rounded-t-lg text-sm font-medium transition-all border-b-2 -mb-px relative ${
                 activeTab === tab.id
-                  ? 'border-primary text-primary bg-primary/5'
-                  : 'border-transparent text-on-surface-variant hover:text-on-surface hover:bg-white/3'
+                  ? 'text-primary'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-white/3'
               }`}
             >
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary"
+                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                />
+              )}
               <span className="material-symbols-outlined text-base" style={activeTab === tab.id ? { fontVariationSettings: "'FILL' 1" } : {}}>{tab.icon}</span>
               {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Tab: Analysis */}
-        {activeTab === 'analysis' && (
-          <div className="grid grid-cols-12 gap-lg animate-scale-in">
-            {/* Competency Matrix + Radar */}
-            <section className="col-span-12 lg:col-span-7 glass-card rounded-xl p-lg relative overflow-hidden hover-lift" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.05)' }}>
-              <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 blur-[60px] rounded-full -mr-10 -mt-10" />
-              <div className="flex justify-between items-start mb-lg">
-                <div>
-                  <h3 className="text-xl font-bold font-display text-primary">Competency Matrix</h3>
-                  <p className="text-on-surface-variant text-sm">AI-evaluated across core pillars</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-5xl font-bold font-display text-primary tabular-nums">{overallScore}<span className="text-2xl text-on-surface-variant/50">/100</span></span>
-                  <p className="text-xs font-mono text-secondary uppercase tracking-widest mt-xs">Surgical Precision</p>
-                </div>
-              </div>
-              <div className="flex flex-col md:flex-row items-center gap-xl">
-                <RadarChart skills={skills} />
-                <div className="flex-1 space-y-md w-full">
-                  {/* Score breakdown bars */}
-                  <div className="space-y-sm">
-                    {scoreBreakdown.map((item, idx) => (
-                      <div key={item.label} className="animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs font-mono text-on-surface-variant">{item.label}</span>
-                          <span className={`text-xs font-bold font-mono ${item.textColor} tabular-nums`}>{item.score}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className={`h-full ${item.color} rounded-full transition-all duration-1000`} style={{ width: `${item.score}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-md bg-white/3 rounded-lg border border-white/5">
-                    <p className="text-xs font-mono text-secondary mb-xs">AI FEEDBACK</p>
-                    <p className="text-sm text-on-surface leading-relaxed">
-                      {aiFeedback}
-                    </p>
-                  </div>
-                  <div className="flex justify-between items-center text-xs font-mono">
-                    <span className="text-on-surface-variant">Top 12% of applicants</span>
-                    <span className="text-primary font-bold">+4pts from last session</span>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Skill Breakdown */}
-            <section className="col-span-12 lg:col-span-5 glass-card rounded-xl p-lg hover-lift">
-              <h3 className="text-xl font-bold font-display mb-lg">Skill Breakdown</h3>
-              <div className="space-y-xl">
-                <div>
-                  <p className="text-xs font-mono text-secondary uppercase tracking-widest mb-md flex items-center gap-sm">
-                    <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    Key Strengths
-                  </p>
-                  <ul className="space-y-md">
-                    {strengths.map((s, idx) => (
-                      <li key={s} className="flex items-start gap-sm p-sm rounded-lg hover:bg-white/3 transition-all animate-fade-in-up" style={{ animationDelay: `${idx * 150}ms` }}>
-                        <span className="material-symbols-outlined text-secondary text-xl mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                        <span className="text-sm text-on-surface">{s}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <p className="text-xs font-mono text-error uppercase tracking-widest mb-md flex items-center gap-sm">
-                    <span className="material-symbols-outlined text-sm">warning</span>
-                    Areas to Improve
-                  </p>
-                  <ul className="space-y-md">
-                    {weaknesses.map((w, idx) => (
-                      <li key={w} className="flex items-start gap-sm p-sm rounded-lg hover:bg-error/5 transition-all animate-fade-in-up" style={{ animationDelay: `${(idx + strengths.length) * 150}ms` }}>
-                        <span className="material-symbols-outlined text-error text-xl shrink-0">warning</span>
-                        <span className="text-sm text-on-surface-variant">{w}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-
-        {/* Tab: Roadmap */}
-        {activeTab === 'roadmap' && (
-          <section className="glass-card rounded-xl p-lg relative overflow-hidden animate-scale-in">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -mr-32 -mt-32" />
-            <h3 className="text-xl font-bold font-display mb-xl flex items-center gap-sm">
-              <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
-              7-Day Improvement Roadmap
-            </h3>
-            <div className="relative">
-              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-outline-variant/30 to-transparent hidden md:block" />
-              <div className="space-y-lg relative">
-                {roadmap.map((item, i) => (
-                  <div key={item.day} className="flex flex-col md:flex-row gap-md items-start md:items-center relative group animate-fade-in-up" style={{ animationDelay: `${i * 150}ms` }}>
-                    <div className={`hidden md:flex absolute left-4 -translate-x-1/2 w-5 h-5 rounded-full border-4 border-background z-10 transition-all group-hover:scale-125 ${i === 0 ? 'bg-primary' : 'bg-outline-variant group-hover:bg-primary/50'}`}
-                      style={i === 0 ? { boxShadow: '0 0 15px rgba(192,193,255,0.4)' } : {}}
-                    />
-                    <div className="w-full md:w-36 flex flex-col items-start md:items-end md:pr-4">
-                      <span className={`text-xs font-mono font-bold uppercase ${i === 0 ? 'text-primary' : 'text-on-surface-variant'}`}>{item.day}</span>
+        {/* Tab contents with AnimatePresence */}
+        <div className="relative">
+          <AnimatePresence mode="wait">
+            {activeTab === 'analysis' && (
+              <motion.div
+                key="analysis"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="grid grid-cols-12 gap-lg"
+              >
+                {/* Competency Matrix + Radar */}
+                <section className="col-span-12 lg:col-span-7 glass-card rounded-xl p-lg relative overflow-hidden hover-lift" style={{ boxShadow: '0 0 40px rgba(192,193,255,0.05)' }}>
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 blur-[60px] rounded-full -mr-10 -mt-10" />
+                  <div className="flex justify-between items-start mb-lg">
+                    <div>
+                      <h3 className="text-xl font-bold font-display text-primary">Competency Matrix</h3>
+                      <p className="text-on-surface-variant text-sm">AI-evaluated across core pillars</p>
                     </div>
-                    <div className="flex-1 bg-surface-container-low p-lg rounded-xl border border-white/5 hover:border-primary/20 transition-all cursor-default group-hover:shadow-[0_0_20px_rgba(192,193,255,0.05)]">
-                      <div className="flex justify-between items-start mb-sm">
-                        <h4 className="font-bold text-on-surface">{item.title}</h4>
-                        {item.priority && (
-                          <span className="px-sm py-xs bg-primary/10 text-primary text-xs font-mono rounded-full shrink-0 ml-md">{item.priority}</span>
-                        )}
-                      </div>
-                      <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
+                    <div className="text-right">
+                      <span className="text-5xl font-bold font-display text-primary tabular-nums">{overallScore}<span className="text-2xl text-on-surface-variant/50">/100</span></span>
+                      <p className="text-xs font-mono text-secondary uppercase tracking-widest mt-xs">Surgical Precision</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            {/* Mentor CTA */}
-            <div className="mt-xl p-lg bg-primary/5 rounded-xl border border-primary/15 flex flex-col md:flex-row items-center justify-between gap-md hover-lift">
-              <div className="flex items-center gap-md">
-                <div className="w-12 h-12 rounded-full bg-surface-container-high border border-primary/20 flex items-center justify-center animate-float">
-                  <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>support_agent</span>
-                </div>
-                <div>
-                  <p className="text-on-surface font-semibold">Talk to a Mentor</p>
-                  <p className="text-xs font-mono text-on-surface-variant">Book a 15-min session to review these gaps.</p>
-                </div>
-              </div>
-              <button className="px-xl py-sm bg-primary text-on-primary rounded-full font-bold text-sm active:scale-95 transition-all hover:shadow-[0_0_20px_rgba(192,193,255,0.3)] w-full md:w-auto">
-                Schedule Now
-              </button>
-            </div>
-          </section>
-        )}
+                  <div className="flex flex-col md:flex-row items-center gap-xl">
+                    <RadarChart skills={skills} />
+                    <div className="flex-1 space-y-md w-full">
+                      {/* Score breakdown bars */}
+                      <div className="space-y-sm">
+                        {scoreBreakdown.map((item, idx) => (
+                          <div key={item.label}>
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-xs font-mono text-on-surface-variant">{item.label}</span>
+                              <span className={`text-xs font-bold font-mono ${item.textColor} tabular-nums`}>{item.score}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${item.score}%` }}
+                                transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: idx * 0.1 }}
+                                className={`h-full ${item.color} rounded-full`}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-md bg-white/3 rounded-lg border border-white/5">
+                        <p className="text-xs font-mono text-secondary mb-xs">AI FEEDBACK</p>
+                        <p className="text-sm text-on-surface leading-relaxed">
+                          {aiFeedback}
+                        </p>
+                      </div>
+                      <div className="flex justify-between items-center text-xs font-mono">
+                        <span className="text-on-surface-variant">Top 12% of applicants</span>
+                        <span className="text-primary font-bold">+4pts from last session</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
 
-        {/* Tab: Study Plan */}
-        {activeTab === 'study' && (
-          <section className="glass-card rounded-xl p-lg animate-scale-in">
-            <div className="flex items-center gap-sm mb-lg">
-              <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
-              <h3 className="text-xl font-bold font-display">Recommended Study Topics</h3>
-            </div>
-            <div className="space-y-md">
-              {studyTopics.map((topic, idx) => (
-                <div key={topic.title} className="group flex items-center justify-between p-lg border border-outline-variant/15 rounded-xl hover:border-primary/30 transition-all cursor-pointer hover:bg-white/2 hover-lift animate-fade-in-up" style={{ animationDelay: `${idx * 150}ms` }}>
-                  <div className="flex items-center gap-md">
-                    <div className={`w-12 h-12 rounded-xl ${topic.bg} flex items-center justify-center ${topic.color} group-hover:scale-110 transition-transform`}>
-                      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{topic.icon}</span>
+                {/* Skill Breakdown */}
+                <section className="col-span-12 lg:col-span-5 glass-card rounded-xl p-lg hover-lift">
+                  <h3 className="text-xl font-bold font-display mb-lg">Skill Breakdown</h3>
+                  <div className="space-y-xl">
+                    <div>
+                      <p className="text-xs font-mono text-secondary uppercase tracking-widest mb-md flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                        Key Strengths
+                      </p>
+                      <ul className="space-y-md">
+                        {strengths.map((s, idx) => (
+                          <motion.li
+                            key={s}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.08, duration: 0.3 }}
+                            className="flex items-start gap-sm p-sm rounded-lg hover:bg-white/3 transition-all"
+                          >
+                            <span className="material-symbols-outlined text-secondary text-xl mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                            <span className="text-sm text-on-surface">{s}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
                     </div>
                     <div>
-                      <div className="flex items-center gap-sm mb-xs">
-                        <p className="font-bold text-on-surface">{topic.title}</p>
-                        <span className={`px-sm py-0.5 text-xs font-mono rounded-full ${
-                          topic.priority === 'High' ? 'bg-error/15 text-error' : 'bg-outline-variant/20 text-on-surface-variant'
-                        }`}>{topic.priority}</span>
-                      </div>
-                      <p className="text-xs font-mono text-on-surface-variant">{topic.sub}</p>
+                      <p className="text-xs font-mono text-error uppercase tracking-widest mb-md flex items-center gap-sm">
+                        <span className="material-symbols-outlined text-sm">warning</span>
+                        Areas to Improve
+                      </p>
+                      <ul className="space-y-md">
+                        {weaknesses.map((w, idx) => (
+                          <motion.li
+                            key={w}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: (idx + strengths.length) * 0.08, duration: 0.3 }}
+                            className="flex items-start gap-sm p-sm rounded-lg hover:bg-error/5 transition-all"
+                          >
+                            <span className="material-symbols-outlined text-error text-xl shrink-0">warning</span>
+                            <span className="text-sm text-on-surface-variant">{w}</span>
+                          </motion.li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                  <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary group-hover:translate-x-1 transition-all">arrow_forward</span>
+                </section>
+              </motion.div>
+            )}
+
+            {activeTab === 'roadmap' && (
+              <motion.section
+                key="roadmap"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.4 }}
+                className="glass-card rounded-xl p-lg relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] rounded-full -mr-32 -mt-32" />
+                <h3 className="text-xl font-bold font-display mb-xl flex items-center gap-sm">
+                  <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>map</span>
+                  7-Day Improvement Roadmap
+                </h3>
+                <div className="relative">
+                  <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-outline-variant/30 to-transparent hidden md:block" />
+                  <div className="space-y-lg relative">
+                    {roadmap.map((item, i) => (
+                      <motion.div
+                        key={item.day}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1, duration: 0.4 }}
+                        className="flex flex-col md:flex-row gap-md items-start md:items-center relative group"
+                      >
+                        <div className={`hidden md:flex absolute left-4 -translate-x-1/2 w-5 h-5 rounded-full border-4 border-background z-10 transition-all group-hover:scale-125 ${i === 0 ? 'bg-primary' : 'bg-outline-variant group-hover:bg-primary/50'}`}
+                          style={i === 0 ? { boxShadow: '0 0 15px rgba(192,193,255,0.4)' } : {}}
+                        />
+                        <div className="w-full md:w-36 flex flex-col items-start md:items-end md:pr-4">
+                          <span className={`text-xs font-mono font-bold uppercase ${i === 0 ? 'text-primary' : 'text-on-surface-variant'}`}>{item.day}</span>
+                        </div>
+                        <div className="flex-1 bg-surface-container-low p-lg rounded-xl border border-white/5 hover:border-primary/20 transition-all cursor-default group-hover:shadow-[0_0_20px_rgba(192,193,255,0.05)]">
+                          <div className="flex justify-between items-start mb-sm">
+                            <h4 className="font-bold text-on-surface">{item.title}</h4>
+                            {item.priority && (
+                              <span className="px-sm py-xs bg-primary/10 text-primary text-xs font-mono rounded-full shrink-0 ml-md">{item.priority}</span>
+                            )}
+                          </div>
+                          <p className="text-sm text-on-surface-variant leading-relaxed">{item.desc}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              ))}
-              <button className="w-full py-lg border border-primary/30 text-primary font-bold rounded-xl hover:bg-primary/10 transition-all active:scale-95 flex items-center justify-center gap-sm">
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>play_circle</span>
-                Start Practice Session
-              </button>
-            </div>
-          </section>
-        )}
+                {/* Mentor CTA */}
+                <div className="mt-xl p-lg bg-primary/5 rounded-xl border border-primary/15 flex flex-col md:flex-row items-center justify-between gap-md hover-lift">
+                  <div className="flex items-center gap-md">
+                    <div className="w-12 h-12 rounded-full bg-surface-container-high border border-primary/20 flex items-center justify-center animate-float">
+                      <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>support_agent</span>
+                    </div>
+                    <div>
+                      <p className="text-on-surface font-semibold">Talk to a Mentor</p>
+                      <p className="text-xs font-mono text-on-surface-variant">Book a 15-min session to review these gaps.</p>
+                    </div>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="px-xl py-sm bg-primary text-on-primary rounded-full font-bold text-sm active:scale-95 transition-all hover:shadow-[0_0_20px_rgba(192,193,255,0.3)] w-full md:w-auto"
+                  >
+                    Schedule Now
+                  </motion.button>
+                </div>
+              </motion.section>
+            )}
+
+            {activeTab === 'study' && (
+              <motion.section
+                key="study"
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.4 }}
+                className="glass-card rounded-xl p-lg"
+              >
+                <div className="flex items-center gap-sm mb-lg">
+                  <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>psychology</span>
+                  <h3 className="text-xl font-bold font-display">Recommended Study Topics</h3>
+                </div>
+                <div className="space-y-md">
+                  {studyTopics.map((topic, idx) => (
+                    <motion.div
+                      key={topic.title}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1, duration: 0.3 }}
+                      whileHover={{ scale: 1.01, borderColor: 'rgba(192,193,255,0.2)' }}
+                      className="group flex items-center justify-between p-lg border border-outline-variant/15 rounded-xl transition-all cursor-pointer hover:bg-white/2"
+                    >
+                      <div className="flex items-center gap-md">
+                        <div className={`w-12 h-12 rounded-xl ${topic.bg} flex items-center justify-center ${topic.color} group-hover:scale-110 transition-transform`}>
+                          <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>{topic.icon}</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-sm mb-xs">
+                            <p className="font-bold text-on-surface">{topic.title}</p>
+                            <span className={`px-sm py-0.5 text-xs font-mono rounded-full ${
+                              topic.priority === 'High' ? 'bg-error/15 text-error' : 'bg-outline-variant/20 text-on-surface-variant'
+                            }`}>{topic.priority}</span>
+                          </div>
+                          <p className="text-xs font-mono text-on-surface-variant">{topic.sub}</p>
+                        </div>
+                      </div>
+                      <span className="material-symbols-outlined text-on-surface-variant group-hover:text-primary group-hover:translate-x-1 transition-all">arrow_forward</span>
+                    </motion.div>
+                  ))}
+                  <motion.button
+                    whileHover={{ scale: 1.01, backgroundColor: 'rgba(192,193,255,0.05)' }}
+                    whileTap={{ scale: 0.99 }}
+                    className="w-full py-lg border border-primary/30 text-primary font-bold rounded-xl transition-all flex items-center justify-center gap-sm"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>play_circle</span>
+                    Start Practice Session
+                  </motion.button>
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* Footer */}
         <footer className="w-full py-xl mt-10 flex flex-col md:flex-row justify-between items-center gap-md border-t border-white/5">
@@ -454,7 +546,7 @@ export default function Summary() {
             ))}
           </div>
         </footer>
-      </main>
+      </motion.main>
 
       {/* Mobile Bottom Nav */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-md z-50">

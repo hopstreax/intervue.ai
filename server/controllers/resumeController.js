@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const pdfParse = require('pdf-parse');
 const Resume = require('../models/Resume');
-const { parseResumeWithGemini } = require('../utils/gemini');
+const { getEngine } = require('../utils/ai');
 
 // ── Multer Configuration ─────────────────────────────────────
 
@@ -108,8 +108,10 @@ const uploadResume = async (req, res, next) => {
       const pdfData = await pdfParse(pdfBuffer);
       extractedText = cleanText(pdfData.text);
 
-      // Call Gemini to parse into structured sections
-      sections = await parseResumeWithGemini(extractedText);
+      // Call the selected AI engine to parse into structured sections
+      const model = req.body.model || 'gemini';
+      const engine = getEngine(model);
+      sections = await engine.parseResume(extractedText);
 
       // Update resume doc with extracted text and structured sections
       resume.extractedText = extractedText;

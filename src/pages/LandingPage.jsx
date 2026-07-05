@@ -1,13 +1,72 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { motion, useInView, useMotionValue, useTransform, animate } from 'framer-motion'
 import { authService } from '../services'
 
-// Exact port of Stitch HTML → React JSX
+/* ── Animation Variants ───────────────────────────────────────── */
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { duration: 0.6, delay: i * 0.12, ease: [0.16, 1, 0.3, 1] }
+  })
+}
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: (i = 0) => ({
+    opacity: 1, scale: 1,
+    transition: { duration: 0.5, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }
+  })
+}
+
+const stagger = { visible: { transition: { staggerChildren: 0.1 } } }
+
+/* ── Animated Counter Component ───────────────────────────────── */
+function AnimatedCounter({ value, suffix = '', duration = 2 }) {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const motionVal = useMotionValue(0)
+  const rounded = useTransform(motionVal, v => {
+    if (typeof value === 'string' && value.includes(',')) {
+      return Math.round(v).toLocaleString()
+    }
+    return Math.round(v)
+  })
+  const [display, setDisplay] = useState('0')
+
+  useEffect(() => {
+    if (!isInView) return
+    const numericValue = typeof value === 'string' ? parseInt(value.replace(/,/g, ''), 10) : value
+    const controls = animate(motionVal, numericValue, {
+      duration,
+      ease: [0.16, 1, 0.3, 1],
+    })
+    const unsub = rounded.on('change', v => setDisplay(String(v)))
+    return () => { controls.stop(); unsub() }
+  }, [isInView, value])
+
+  return <span ref={ref}>{display}{suffix}</span>
+}
+
+/* ── Floating Particle ────────────────────────────────────────── */
+function Particle({ delay = 0, x = 0, y = 0 }) {
+  return (
+    <motion.div
+      className="absolute rounded-full bg-primary/20"
+      style={{ width: Math.random() * 4 + 2, height: Math.random() * 4 + 2, left: `${x}%`, top: `${y}%` }}
+      animate={{ y: [0, -20, 0], opacity: [0.2, 0.6, 0.2] }}
+      transition={{ duration: 4 + Math.random() * 3, delay, repeat: Infinity, ease: 'easeInOut' }}
+    />
+  )
+}
+
 export default function LandingPage() {
   const navigate = useNavigate()
   const aiTextRef = useRef(null)
   const isLoggedIn = authService.isAuthenticated()
 
+  // Typewriter effect
   useEffect(() => {
     const el = aiTextRef.current
     if (!el) return
@@ -34,18 +93,29 @@ export default function LandingPage() {
     return () => observer.disconnect()
   }, [])
 
+  // Generate particles
+  const particles = Array.from({ length: 20 }, (_, i) => ({
+    delay: Math.random() * 3,
+    x: Math.random() * 100,
+    y: Math.random() * 100,
+  }))
+
   return (
     <div className="bg-background text-on-background min-h-screen overflow-x-hidden">
 
       {/* ── TOP NAV ─────────────────────────────────────────────────── */}
-      <header style={{
-        position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 50,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '16px 24px',
-        maxWidth: '1280px', margin: '0 auto', right: 0,
-        background: 'rgba(19,19,19,0.7)', backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255,255,255,0.05)'
-      }}>
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', zIndex: 50,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 24px',
+          maxWidth: '1280px', margin: '0 auto', right: 0,
+          background: 'rgba(19,19,19,0.7)', backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255,255,255,0.05)'
+        }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span style={{ fontFamily: 'Geist, sans-serif', fontSize: '20px', fontWeight: 700, color: '#e5e2e1', letterSpacing: '-0.02em' }}>
             InterviewIQ AI
@@ -84,7 +154,7 @@ export default function LandingPage() {
             </>
           )}
         </div>
-      </header>
+      </motion.header>
 
       <main style={{ position: 'relative' }}>
 
@@ -94,74 +164,96 @@ export default function LandingPage() {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           textAlign: 'center', overflow: 'hidden', padding: '128px 16px 80px'
         }}>
-          {/* Ambient glow */}
-          <div style={{
-            position: 'absolute', top: '25%', left: '50%', transform: 'translateX(-50%)',
-            width: '600px', height: '600px',
-            background: 'rgba(192,193,255,0.05)', borderRadius: '50%', filter: 'blur(120px)',
-            pointerEvents: 'none'
-          }} />
+          {/* Ambient glow — floating */}
+          <motion.div
+            animate={{ y: [0, -15, 0], scale: [1, 1.05, 1] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', top: '25%', left: '50%', transform: 'translateX(-50%)',
+              width: '600px', height: '600px',
+              background: 'rgba(192,193,255,0.06)', borderRadius: '50%', filter: 'blur(120px)',
+              pointerEvents: 'none'
+            }}
+          />
 
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}>
+          {/* Particles */}
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+            {particles.map((p, i) => <Particle key={i} {...p} />)}
+          </div>
+
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="visible"
+            style={{ position: 'relative', zIndex: 10, maxWidth: '896px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px', alignItems: 'center' }}
+          >
 
             {/* Badge */}
-            <div className="animate-fade-in-up" style={{
+            <motion.div variants={fadeUp} custom={0} style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px',
               padding: '4px 16px', borderRadius: '9999px',
               border: '1px solid #464554', background: '#1c1b1b',
               fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', color: '#c7c4d7'
             }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#c0c1ff', display: 'inline-block', animation: 'pulse 2s infinite' }} />
-              New: GPT-4o Powered Mock Interviews
-            </div>
+              Powered by Gemini & GPT-4o
+            </motion.div>
 
             {/* Headline */}
-            <h1 className="gradient-text animate-fade-in-up delay-100" style={{
-              fontFamily: 'Geist, sans-serif', fontSize: 'clamp(32px, 5vw, 48px)',
-              fontWeight: 700, lineHeight: '1.15', letterSpacing: '-0.04em',
+            <motion.h1 variants={fadeUp} custom={1} className="gradient-text" style={{
+              fontFamily: 'Geist, sans-serif', fontSize: 'clamp(32px, 5vw, 56px)',
+              fontWeight: 700, lineHeight: '1.1', letterSpacing: '-0.04em',
               margin: 0
             }}>
               Ace Interviews Tailored<br />To Your Resume
-            </h1>
+            </motion.h1>
 
             {/* Subheadline */}
-            <p className="animate-fade-in-up delay-200" style={{ fontSize: '18px', lineHeight: '28px', color: '#c7c4d7', maxWidth: '640px', margin: 0 }}>
+            <motion.p variants={fadeUp} custom={2} style={{ fontSize: '18px', lineHeight: '28px', color: '#c7c4d7', maxWidth: '640px', margin: 0 }}>
               Upload your resume and let AI conduct personalized mock interviews based on your skills, projects, and experience.
-            </p>
+            </motion.p>
 
             {/* CTAs */}
-            <div className="animate-fade-in-up delay-300" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '16px' }}>
-              <button onClick={() => navigate('/signup')}
+            <motion.div variants={fadeUp} custom={3} style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center', paddingTop: '16px' }}>
+              <motion.button
+                whileHover={{ scale: 1.04, boxShadow: '0 0 40px rgba(192,193,255,0.35)' }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/signup')}
                 style={{
                   padding: '16px 40px', background: '#c0c1ff', color: '#1000a9',
                   fontWeight: 700, fontSize: '18px', borderRadius: '12px', border: 'none',
                   cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'Geist, sans-serif'
                 }}
-                onMouseOver={e => e.currentTarget.style.boxShadow = '0 0 30px rgba(192,193,255,0.3)'}
-                onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}
               >
                 Start Free
-              </button>
-              <button style={{
-                padding: '16px 40px',
-                border: '1px solid #464554',
-                background: 'rgba(14,14,14,0.5)',
-                backdropFilter: 'blur(8px)',
-                color: '#e5e2e1',
-                fontWeight: 700, fontSize: '18px', borderRadius: '12px',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                transition: 'all 0.2s', fontFamily: 'Geist, sans-serif'
-              }}>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.04, borderColor: '#c0c1ff' }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  padding: '16px 40px',
+                  border: '1px solid #464554',
+                  background: 'rgba(14,14,14,0.5)',
+                  backdropFilter: 'blur(8px)',
+                  color: '#e5e2e1',
+                  fontWeight: 700, fontSize: '18px', borderRadius: '12px',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                  transition: 'all 0.2s', fontFamily: 'Geist, sans-serif'
+                }}>
                 <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>play_circle</span>
                 Watch Demo
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
 
             {/* Chat Preview Mockup */}
-            <div className="glass-card ai-glow" style={{
-              marginTop: '80px', borderRadius: '16px', padding: '24px',
-              maxWidth: '768px', width: '100%', textAlign: 'left'
-            }}>
+            <motion.div
+              variants={scaleIn}
+              custom={4}
+              className="glass-card ai-glow"
+              style={{
+                marginTop: '80px', borderRadius: '16px', padding: '24px',
+                maxWidth: '768px', width: '100%', textAlign: 'left'
+              }}>
               {/* Window bar */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid rgba(70,69,84,0.3)', paddingBottom: '16px', marginBottom: '24px' }}>
                 <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(255,180,171,0.4)' }} />
@@ -195,8 +287,8 @@ export default function LandingPage() {
                   </p>
                 </div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* ── STATS BAR ────────────────────────────────────────────────── */}
@@ -204,12 +296,14 @@ export default function LandingPage() {
           <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '40px', textAlign: 'center' }}>
               {[
-                { value: '50,000+', label: 'Questions Asked', color: '#c0c1ff' },
-                { value: '95%', label: 'Personalized', color: '#4cd7f6' },
-                { value: '500+', label: 'Roles Supported', color: '#ffb783' },
+                { value: 50000, suffix: '+', label: 'Questions Asked', color: '#c0c1ff' },
+                { value: 95, suffix: '%', label: 'Personalized', color: '#4cd7f6' },
+                { value: 500, suffix: '+', label: 'Roles Supported', color: '#ffb783' },
               ].map(stat => (
                 <div key={stat.label} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ fontFamily: 'Geist, sans-serif', fontSize: '32px', fontWeight: 700, color: stat.color }}>{stat.value}</div>
+                  <div style={{ fontFamily: 'Geist, sans-serif', fontSize: '32px', fontWeight: 700, color: stat.color }}>
+                    <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                  </div>
                   <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#c7c4d7', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
                 </div>
               ))}
@@ -219,78 +313,84 @@ export default function LandingPage() {
 
         {/* ── FEATURES BENTO GRID ──────────────────────────────────────── */}
         <section style={{ padding: '80px 24px', maxWidth: '1280px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '80px' }}>
-            <h2 style={{ fontFamily: 'Geist, sans-serif', fontSize: '32px', fontWeight: 700, color: '#e5e2e1', margin: '0 0 16px' }}>Engineered for Success</h2>
-            <p style={{ fontSize: '18px', color: '#c7c4d7', maxWidth: '576px', margin: '0 auto' }}>
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}
+            variants={stagger}
+            style={{ textAlign: 'center', marginBottom: '80px' }}
+          >
+            <motion.h2 variants={fadeUp} style={{ fontFamily: 'Geist, sans-serif', fontSize: '32px', fontWeight: 700, color: '#e5e2e1', margin: '0 0 16px' }}>Engineered for Success</motion.h2>
+            <motion.p variants={fadeUp} custom={1} style={{ fontSize: '18px', color: '#c7c4d7', maxWidth: '576px', margin: '0 auto' }}>
               Our platform combines state-of-the-art LLMs with recruitment best practices to give you a competitive edge.
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gridTemplateRows: 'auto auto', gap: '24px', minHeight: '600px' }}>
-            {/* Card 1 — big */}
-            <div className="glass-card" style={{ gridColumn: 'span 8', borderRadius: '16px', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', minHeight: '280px' }}>
-              <span className="material-symbols-outlined" style={{ position: 'absolute', top: '24px', right: '24px', fontSize: '120px', color: '#c0c1ff', opacity: 0.15, fontVariationSettings: "'FILL' 1" }}>psychology</span>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="material-symbols-outlined" style={{ color: '#c0c1ff', display: 'block', marginBottom: '16px', fontVariationSettings: "'FILL' 1" }}>grain</span>
-                <h3 style={{ fontFamily: 'Geist, sans-serif', fontSize: '24px', fontWeight: 600, color: '#e5e2e1', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Resume-Aware AI Interviews</h3>
-                <p style={{ fontSize: '16px', color: '#c7c4d7', margin: 0, maxWidth: '448px' }}>Our AI parses your specific projects, tech stack, and career progression to ask relevant, high-signal questions.</p>
-              </div>
-            </div>
-
-            {/* Card 2 */}
-            <div className="glass-card" style={{ gridColumn: 'span 4', borderRadius: '16px', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', background: 'rgba(42,42,42,0.4)' }}>
-              <span className="material-symbols-outlined" style={{ position: 'absolute', top: '24px', right: '24px', fontSize: '100px', color: '#4cd7f6', opacity: 0.15 }}>forum</span>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="material-symbols-outlined" style={{ color: '#4cd7f6', display: 'block', marginBottom: '16px' }}>message</span>
-                <h3 style={{ fontFamily: 'Geist, sans-serif', fontSize: '24px', fontWeight: 600, color: '#e5e2e1', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Chat-Based Interface</h3>
-                <p style={{ fontSize: '16px', color: '#c7c4d7', margin: 0 }}>Natural conversation flow that simulates a real recruiter or hiring manager interaction seamlessly.</p>
-              </div>
-            </div>
-
-            {/* Card 3 */}
-            <div className="glass-card" style={{ gridColumn: 'span 4', borderRadius: '16px', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', background: 'rgba(42,42,42,0.4)' }}>
-              <span className="material-symbols-outlined" style={{ position: 'absolute', top: '24px', right: '24px', fontSize: '100px', color: '#ffb783', opacity: 0.15 }}>bar_chart_4_bars</span>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="material-symbols-outlined" style={{ color: '#ffb783', display: 'block', marginBottom: '16px' }}>bar_chart</span>
-                <h3 style={{ fontFamily: 'Geist, sans-serif', fontSize: '24px', fontWeight: 600, color: '#e5e2e1', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Smart Feedback</h3>
-                <p style={{ fontSize: '16px', color: '#c7c4d7', margin: 0 }}>Instant, actionable analysis on your answers, body language (textual cues), and technical accuracy.</p>
-              </div>
-            </div>
-
-            {/* Card 4 */}
-            <div className="glass-card" style={{ gridColumn: 'span 4', borderRadius: '16px', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden' }}>
-              <span className="material-symbols-outlined" style={{ position: 'absolute', top: '24px', right: '24px', fontSize: '100px', color: '#c0c1ff', opacity: 0.15 }}>track_changes</span>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="material-symbols-outlined" style={{ color: '#c0c1ff', display: 'block', marginBottom: '16px' }}>target</span>
-                <h3 style={{ fontFamily: 'Geist, sans-serif', fontSize: '24px', fontWeight: 600, color: '#e5e2e1', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Improvement Roadmap</h3>
-                <p style={{ fontSize: '16px', color: '#c7c4d7', margin: 0 }}>Personalized study guides generated based on gaps identified during your mock sessions.</p>
-              </div>
-            </div>
-
-            {/* Card 5 */}
-            <div className="glass-card" style={{ gridColumn: 'span 4', borderRadius: '16px', padding: '40px', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', background: 'rgba(42,42,42,0.4)' }}>
-              <span className="material-symbols-outlined" style={{ position: 'absolute', top: '24px', right: '24px', fontSize: '100px', color: '#4cd7f6', opacity: 0.15 }}>trending_up</span>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="material-symbols-outlined" style={{ color: '#4cd7f6', display: 'block', marginBottom: '16px' }}>trending_up</span>
-                <h3 style={{ fontFamily: 'Geist, sans-serif', fontSize: '24px', fontWeight: 600, color: '#e5e2e1', margin: '0 0 8px', letterSpacing: '-0.02em' }}>Progress Tracking</h3>
-                <p style={{ fontSize: '16px', color: '#c7c4d7', margin: 0 }}>Watch your confidence and technical scoring improve over time with visual analytics.</p>
-              </div>
-            </div>
+            {[
+              { span: 8, icon: 'psychology', bgIcon: 'psychology', color: '#c0c1ff', title: 'Resume-Aware AI Interviews', desc: 'Our AI parses your specific projects, tech stack, and career progression to ask relevant, high-signal questions.', maxW: '448px' },
+              { span: 4, icon: 'message', bgIcon: 'forum', color: '#4cd7f6', title: 'Chat-Based Interface', desc: 'Natural conversation flow that simulates a real recruiter or hiring manager interaction seamlessly.', bg: true },
+              { span: 4, icon: 'bar_chart', bgIcon: 'bar_chart_4_bars', color: '#ffb783', title: 'Smart Feedback', desc: 'Instant, actionable analysis on your answers, body language (textual cues), and technical accuracy.', bg: true },
+              { span: 4, icon: 'target', bgIcon: 'track_changes', color: '#c0c1ff', title: 'Improvement Roadmap', desc: 'Personalized study guides generated based on gaps identified during your mock sessions.' },
+              { span: 4, icon: 'trending_up', bgIcon: 'trending_up', color: '#4cd7f6', title: 'Progress Tracking', desc: 'Watch your confidence and technical scoring improve over time with visual analytics.', bg: true },
+            ].map((card, i) => (
+              <motion.div
+                key={card.title}
+                className="glass-card hover-lift"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ borderColor: 'rgba(192,193,255,0.25)' }}
+                style={{
+                  gridColumn: `span ${card.span}`,
+                  borderRadius: '16px', padding: '40px', display: 'flex', flexDirection: 'column',
+                  justifyContent: 'flex-end', position: 'relative', overflow: 'hidden', minHeight: '280px',
+                  ...(card.bg ? { background: 'rgba(42,42,42,0.4)' } : {})
+                }}
+              >
+                <motion.span
+                  className="material-symbols-outlined"
+                  animate={{ rotate: [0, 3, -3, 0] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{ position: 'absolute', top: '24px', right: '24px', fontSize: card.span === 8 ? '120px' : '100px', color: card.color, opacity: 0.15, fontVariationSettings: card.span === 8 ? "'FILL' 1" : undefined }}
+                >
+                  {card.bgIcon}
+                </motion.span>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  <span className="material-symbols-outlined" style={{ color: card.color, display: 'block', marginBottom: '16px', fontVariationSettings: card.span === 8 ? "'FILL' 1" : undefined }}>{card.icon}</span>
+                  <h3 style={{ fontFamily: 'Geist, sans-serif', fontSize: '24px', fontWeight: 600, color: '#e5e2e1', margin: '0 0 8px', letterSpacing: '-0.02em' }}>{card.title}</h3>
+                  <p style={{ fontSize: '16px', color: '#c7c4d7', margin: 0, maxWidth: card.maxW }}>{card.desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </section>
 
         {/* ── IMAGE CALLOUT ─────────────────────────────────────────────── */}
         <section style={{ padding: '40px 24px' }}>
-          <div className="glass-card" style={{ maxWidth: '1280px', margin: '0 auto', borderRadius: '32px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center' }}>
+          <motion.div
+            className="glass-card"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-100px' }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            style={{ maxWidth: '1280px', margin: '0 auto', borderRadius: '32px', overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', alignItems: 'center' }}
+          >
             <div style={{ padding: '80px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
               <h2 style={{ fontFamily: 'Geist, sans-serif', fontSize: '32px', fontWeight: 700, color: '#e5e2e1', margin: 0, letterSpacing: '-0.02em' }}>Your Resume is the Script.</h2>
               <p style={{ fontSize: '18px', color: '#c7c4d7', margin: 0 }}>Our AI doesn't just ask generic questions. It analyzes your career trajectory to find the specific areas a real interviewer will dig into.</p>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {['Deep Tech-Stack Validation', 'Project-Specific Behavioral Drills', 'Cultural Fit Simulations'].map(item => (
-                  <li key={item} style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#e5e2e1', fontSize: '16px' }}>
+                {['Deep Tech-Stack Validation', 'Project-Specific Behavioral Drills', 'Cultural Fit Simulations'].map((item, i) => (
+                  <motion.li
+                    key={item}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + i * 0.1, duration: 0.4 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#e5e2e1', fontSize: '16px' }}
+                  >
                     <span className="material-symbols-outlined" style={{ color: '#c0c1ff', fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     {item}
-                  </li>
+                  </motion.li>
                 ))}
               </ul>
             </div>
@@ -302,33 +402,43 @@ export default function LandingPage() {
               }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #131313, transparent)' }} />
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* ── FINAL CTA ─────────────────────────────────────────────────── */}
         <section style={{ padding: '128px 24px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(192,193,255,0.05)', filter: 'blur(120px)', borderRadius: '50%', transform: 'scale(1.5)', pointerEvents: 'none' }} />
-          <div style={{ position: 'relative', zIndex: 10, maxWidth: '768px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}>
-            <h2 style={{ fontFamily: 'Geist, sans-serif', fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: 700, color: '#e5e2e1', margin: 0, letterSpacing: '-0.04em' }}>
+          <motion.div
+            animate={{ scale: [1, 1.1, 1], opacity: [0.04, 0.08, 0.04] }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(192,193,255,0.05)', filter: 'blur(120px)', borderRadius: '50%', transform: 'scale(1.5)', pointerEvents: 'none' }}
+          />
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-100px' }}
+            variants={stagger}
+            style={{ position: 'relative', zIndex: 10, maxWidth: '768px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '40px', alignItems: 'center' }}
+          >
+            <motion.h2 variants={fadeUp} style={{ fontFamily: 'Geist, sans-serif', fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: 700, color: '#e5e2e1', margin: 0, letterSpacing: '-0.04em' }}>
               Stop practicing. Start performing.
-            </h2>
-            <p style={{ fontSize: '18px', color: '#c7c4d7', margin: 0 }}>
+            </motion.h2>
+            <motion.p variants={fadeUp} custom={1} style={{ fontSize: '18px', color: '#c7c4d7', margin: 0 }}>
               Join 10,000+ professionals who landed their dream roles at FAANG, startups, and top-tier agencies.
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button onClick={() => navigate('/signup')} style={{
-                padding: '16px 40px', background: '#c0c1ff', color: '#1000a9',
-                fontWeight: 700, fontSize: '16px', borderRadius: '12px', border: 'none',
-                cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'Geist, sans-serif'
-              }}
-                onMouseOver={e => e.currentTarget.style.boxShadow = '0 0 40px rgba(192,193,255,0.4)'}
-                onMouseOut={e => e.currentTarget.style.boxShadow = 'none'}
+            </motion.p>
+            <motion.div variants={fadeUp} custom={2} style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <motion.button
+                whileHover={{ scale: 1.04, boxShadow: '0 0 50px rgba(192,193,255,0.4)' }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/signup')}
+                style={{
+                  padding: '16px 40px', background: '#c0c1ff', color: '#1000a9',
+                  fontWeight: 700, fontSize: '16px', borderRadius: '12px', border: 'none',
+                  cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'Geist, sans-serif'
+                }}
               >
                 Get Started For Free
-              </button>
+              </motion.button>
               <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#c7c4d7', margin: 0 }}>No credit card required</p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </section>
       </main>
 

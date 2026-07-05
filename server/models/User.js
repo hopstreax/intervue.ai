@@ -58,6 +58,11 @@ const userSchema = new mongoose.Schema(
       enum: ['free', 'premium'],
       default: 'free',
     },
+    preferredModel: {
+      type: String,
+      enum: ['gemini', 'gpt'],
+      default: 'gemini',
+    },
   },
   {
     timestamps: true,
