@@ -336,7 +336,7 @@ export default function LandingPage() {
               <MagneticBtn
                 onClick={() => navigate('/dashboard')}
                 className="coral-btn"
-                style={{ marginLeft: 8, padding: '8px 20px', borderRadius: 99, fontSize: 14, fontWeight: 700, color: '#fff', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                style={{ marginLeft: 8, padding: '8px 22px', borderRadius: 99, fontSize: 14, fontWeight: 800, color: '#1a0a04', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, letterSpacing: '-0.01em' }}
               >
                 Dashboard →
               </MagneticBtn>
@@ -352,7 +352,7 @@ export default function LandingPage() {
                 <MagneticBtn
                   onClick={() => navigate('/signup')}
                   className="coral-btn"
-                  style={{ padding: '8px 20px', borderRadius: 99, fontSize: 14, fontWeight: 700, color: '#fff', border: 'none', cursor: 'pointer' }}
+                  style={{ padding: '8px 22px', borderRadius: 99, fontSize: 14, fontWeight: 800, color: '#1a0a04', border: 'none', cursor: 'pointer', letterSpacing: '-0.01em' }}
                 >
                   Get started
                 </MagneticBtn>
@@ -463,7 +463,7 @@ export default function LandingPage() {
                 <MagneticBtn
                   onClick={() => navigate('/signup')}
                   className="coral-btn"
-                  style={{ padding: '13px 28px', borderRadius: 99, fontSize: 15, fontWeight: 700, color: '#fff', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+                  style={{ padding: '13px 30px', borderRadius: 99, fontSize: 15, fontWeight: 800, color: '#1a0a04', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, letterSpacing: '-0.01em' }}
                 >
                   Start Free <span style={{ fontSize: 18 }}>→</span>
                 </MagneticBtn>

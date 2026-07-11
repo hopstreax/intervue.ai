@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { authService, interviewService } from '../services'
 
+const EASE = [0.16, 1, 0.3, 1]
+
 export default function Interview() {
   const navigate = useNavigate()
   const [session, setSession] = useState(null)
@@ -13,7 +15,7 @@ export default function Interview() {
   const [ending, setEnding] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [modelType, setModelType] = useState(() => localStorage.getItem('intervue_model') || 'gemini')
-  const [paymentStep, setPaymentStep] = useState('plan') // plan, checkout, success
+  const [paymentStep, setPaymentStep] = useState('plan')
   const [cardName, setCardName] = useState('')
   const [cardNumber, setCardNumber] = useState('4242 4242 4242 4242')
   const [cardExpiry, setCardExpiry] = useState('12/28')
@@ -31,7 +33,6 @@ export default function Interview() {
   const textareaRef = useRef(null)
   const user = authService.getUser()
 
-  // Timer
   useEffect(() => {
     timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000)
     return () => clearInterval(timerRef.current)
@@ -73,11 +74,8 @@ export default function Interview() {
     const userMessage = inputVal.trim()
     setInputVal('')
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
-
-    // Add user message locally
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setSending(true); setError('')
-
     try {
       const res = await interviewService.chat({ interviewId: session, message: userMessage })
       if (res.data && res.data.reply) {
@@ -91,7 +89,6 @@ export default function Interview() {
       } else {
         setError(err.message || 'Connection lost. Please try re-sending.')
       }
-      // Remove last local message if failed to let them retry
       setMessages(prev => prev.filter((_, idx) => idx !== prev.length - 1))
       setInputVal(userMessage)
     } finally {
@@ -131,209 +128,219 @@ export default function Interview() {
   }
 
   return (
-    <div className="bg-background text-on-background h-screen flex overflow-hidden">
+    <div style={{ background: '#f7f5f0', height: '100vh', display: 'flex', overflow: 'hidden', fontFamily: "'Inter', 'DM Sans', sans-serif" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        .int-input { width: 100%; background: transparent; border: none; outline: none; resize: none; max-height: 140px; padding: 12px 14px; font-size: 14px; font-family: Inter, sans-serif; color: #1a1a1a; line-height: 1.6; }
+        .int-input::placeholder { color: #aaa; }
+        .coral-btn-int { background: #ff7557; color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s; }
+        .coral-btn-int:hover { background: #ff5e3a; }
+        .int-sidebar { display: none; flex-direction: column; height: 100vh; width: 240px; background: #fff; border-right: 1.5px solid #1a1a1a; padding: 0; position: fixed; left: 0; top: 0; z-index: 40; }
+        @media (min-width: 769px) { .int-sidebar { display: flex; } .int-main { margin-left: 240px; } }
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(26,26,26,0.1); border-radius: 99px; }
+      `}</style>
 
-      {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
+      {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
       <AnimatePresence>
-        {(sidebarOpen || window.innerWidth >= 768) && (
-          <motion.aside
-            initial={{ x: -260 }}
-            animate={{ x: 0 }}
-            exit={{ x: -260 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className={`flex flex-col h-screen w-64 bg-surface-container-lowest border-r border-white/5 py-lg fixed md:relative left-0 top-0 z-40 shrink-0 ${
-              sidebarOpen ? 'flex' : 'hidden md:flex'
-            }`}
-          >
-            {/* Logo */}
-            <div className="px-lg mb-xl flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-sm mb-xs">
-                  <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-                  <h1 className="text-2xl font-bold font-display text-primary tracking-tighter">InterviewIQ</h1>
-                </div>
-                <p className="text-xs font-mono text-on-surface-variant opacity-50 uppercase tracking-widest ml-8">Premium Tier</p>
-              </div>
-              <button className="md:hidden text-outline hover:text-on-surface" onClick={() => setSidebarOpen(false)}>
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            {/* Metrics */}
-            <div className="px-lg space-y-md mb-xl">
-              <div>
-                <h2 className="text-xs font-mono text-outline-variant uppercase mb-sm tracking-widest">Session Stats</h2>
-                <div className="glass-panel p-md rounded-xl space-y-md border border-white/5">
-                  <div>
-                    <div className="flex justify-between text-xs text-on-surface-variant mb-xs">
-                      <span>Clarity Rating</span>
-                      <span className="font-mono">{metrics.clarity}%</span>
-                    </div>
-                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                      <motion.div className="h-full bg-primary" animate={{ width: `${metrics.clarity}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs text-on-surface-variant mb-xs">
-                      <span>Technical Depth</span>
-                      <span className="font-mono">{metrics.accuracy}%</span>
-                    </div>
-                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                      <motion.div className="h-full bg-secondary" animate={{ width: `${metrics.accuracy}%` }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="px-sm mt-auto space-y-xs pt-md border-t border-white/5">
-              <button
-                onClick={handleEndInterview}
-                disabled={ending}
-                className="w-full py-md bg-error text-on-error font-bold rounded-lg mb-sm active:scale-98 transition-all hover:shadow-[0_0_20px_rgba(255,180,171,0.2)] flex items-center justify-center gap-xs text-sm"
-              >
-                <span className="material-symbols-outlined text-base">stop_circle</span>
-                {ending ? 'Saving Evaluation...' : 'End & Grade Interview'}
-              </button>
-
-              <div className="flex items-center gap-md px-md py-sm rounded-xl hover:bg-white/5 transition-all cursor-pointer">
-                <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>person</span>
-                </div>
-                <div className="flex flex-col overflow-hidden">
-                  <span className="text-sm font-bold truncate text-on-surface">{user?.name || 'User'}</span>
-                  <span className="text-xs font-mono text-outline-variant truncate">{user?.email || ''}</span>
-                </div>
-              </div>
-            </div>
-          </motion.aside>
+        {(sidebarOpen) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,26,26,0.5)', zIndex: 30 }}
+            className="md-hidden"
+          />
         )}
       </AnimatePresence>
 
-      {/* Backdrop for mobile menu */}
-      {sidebarOpen && (
-        <div className="md:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-30" onClick={() => setSidebarOpen(false)} />
-      )}
+      <div className="int-sidebar" style={{ flexShrink: 0 }}>
+        {/* Logo */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #e8e5de', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 30, height: 30, background: '#1a1a1a', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#ff7557', fontSize: 14, fontWeight: 900, fontFamily: 'Space Grotesk' }}>IQ</span>
+            </div>
+            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#1a1a1a', letterSpacing: '-0.03em' }}>InterviewIQ</span>
+          </Link>
+        </div>
 
-      {/* ── MAIN CHAT AREA ───────────────────────────────────────────── */}
-      <main className="relative flex-1 flex flex-col h-full bg-background overflow-hidden">
+        {/* Session stats */}
+        <div style={{ padding: '16px 16px', borderBottom: '1px solid #e8e5de' }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Session Stats</p>
+          <div style={{ background: '#f7f5f0', border: '1px solid #e8e5de', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[
+              { label: 'Clarity Rating', val: metrics.clarity, color: '#ff7557' },
+              { label: 'Technical Depth', val: metrics.accuracy, color: '#4285f4' },
+            ].map(m => (
+              <div key={m.label}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#666', marginBottom: 5 }}>
+                  <span style={{ fontWeight: 600 }}>{m.label}</span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{m.val}%</span>
+                </div>
+                <div style={{ height: 5, background: '#e8e5de', borderRadius: 99, overflow: 'hidden' }}>
+                  <motion.div animate={{ width: `${m.val}%` }} transition={{ duration: 0.6, ease: EASE }}
+                    style={{ height: '100%', background: m.color, borderRadius: 99 }} />
+                </div>
+              </div>
+            ))}
+          </div>
 
-        {/* Top Bar */}
-        <header className="h-16 md:h-20 border-b border-white/5 flex items-center justify-between px-md md:px-xl bg-background/80 backdrop-blur-md z-10 shrink-0">
-          <div className="flex items-center gap-sm md:gap-xl">
-            {/* Mobile menu toggle */}
-            <button className="md:hidden text-on-surface-variant hover:text-on-surface" onClick={() => setSidebarOpen(true)}>
-              <span className="material-symbols-outlined">menu</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, padding: '8px 12px', background: '#fff', border: '1px solid #e8e5de', borderRadius: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>Q Answered</span>
+            <span style={{ fontSize: 18, fontWeight: 900, color: '#ff7557', fontFamily: 'Space Grotesk' }}>{metrics.questionsAnswered}</span>
+          </div>
+        </div>
+
+        {/* Model badge */}
+        <div style={{ padding: '14px 16px', borderBottom: '1px solid #e8e5de' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#fff6f4', border: '1.5px solid #ff7557', borderRadius: 99, padding: '5px 12px' }}>
+            <span style={{ fontSize: 12 }}>{modelType === 'gpt' ? '⊕' : '✦'}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#ff7557', fontFamily: 'Space Grotesk' }}>{modelType === 'gpt' ? 'GPT-4o' : 'Gemini'}</span>
+          </div>
+        </div>
+
+        {/* End interview button */}
+        <div style={{ padding: '14px 16px', marginTop: 'auto', borderTop: '1px solid #e8e5de' }}>
+          <motion.button
+            onClick={handleEndInterview}
+            disabled={ending}
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            style={{ width: '100%', padding: '12px', background: '#1a1a1a', color: '#ff7557', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'Space Grotesk' }}
+          >
+            {ending ? (
+              <>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
+                  style={{ width: 14, height: 14, border: '2px solid rgba(255,117,87,0.3)', borderTopColor: '#ff7557', borderRadius: '50%' }} />
+                Saving...
+              </>
+            ) : '⏹ End & Grade Interview'}
+          </motion.button>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 4px', marginTop: 8 }}>
+            <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, color: '#1a0a04', flexShrink: 0 }}>
+              {(user?.name || 'U')[0].toUpperCase()}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name || 'User'}</div>
+              <div style={{ fontSize: 10, color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>{user?.email || ''}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MAIN CHAT AREA ──────────────────────────────────────────────── */}
+      <main className="int-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: '#f7f5f0' }}>
+
+        {/* Top bar */}
+        <header style={{ height: 64, borderBottom: '1.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', background: 'rgba(247,245,240,0.95)', backdropFilter: 'blur(16px)', flexShrink: 0, zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Mobile menu */}
+            <button onClick={() => setSidebarOpen(true)} className="mobile-menu-btn"
+              style={{ background: 'none', border: '1.5px solid #1a1a1a', borderRadius: 8, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#1a1a1a' }}>
+              ☰
             </button>
+            <style>{`@media (min-width: 769px) { .mobile-menu-btn { display: none !important; } }`}</style>
 
-            {/* Active Model Badge */}
-            <div className="hidden md:inline-flex items-center gap-xs px-sm py-xs rounded-full border border-primary/20 bg-primary/5 text-xs font-mono text-primary">
-              <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1", fontSize: '14px' }}>
-                {modelType === 'gpt' ? 'smart_toy' : 'auto_awesome'}
-              </span>
-              {modelType === 'gpt' ? 'GPT-4o' : 'Gemini'}
+            {/* Model badge */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff6f4', border: '1px solid #ffd4c8', borderRadius: 99, padding: '4px 12px' }}>
+              <span style={{ fontSize: 12 }}>{modelType === 'gpt' ? '⊕' : '✦'}</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#ff7557', fontFamily: 'Space Grotesk' }}>{modelType === 'gpt' ? 'GPT-4o' : 'Gemini'}</span>
             </div>
 
             {/* Progress */}
-            <div className="flex flex-col">
-              <span className="text-xs font-mono text-outline-variant uppercase mb-0.5 hidden md:block">Progress</span>
-              <div className="flex items-center gap-sm">
-                <span className="text-sm font-semibold text-on-surface">Question {questionNum}</span>
-                <div className="flex items-center text-primary text-xs font-bold bg-primary/20 px-2 py-0.5 rounded-full">
-                  <span className="material-symbols-outlined text-sm">arrow_upward</span>
-                  {metrics.questionsAnswered}
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Progress</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a' }}>Question {questionNum}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#ff7557', background: '#fff6f4', padding: '1px 8px', borderRadius: 99, fontFamily: 'monospace' }}>+{metrics.questionsAnswered}</span>
               </div>
             </div>
           </div>
 
           {/* Timer + End */}
-          <div className="flex items-center gap-sm md:gap-lg">
-            <div className="flex items-center gap-sm text-xs font-mono text-on-surface-variant bg-white/5 px-3 py-2 rounded-lg border border-white/5">
-              <span className="material-symbols-outlined text-sm text-secondary animate-pulse" style={{ fontVariationSettings: "'FILL' 1" }}>schedule</span>
-              <span className="tabular-nums">{formatTime(elapsed)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: '#fff', border: '1px solid #e8e5de', borderRadius: 10, fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: '#555' }}>
+              ⏱ {formatTime(elapsed)}
             </div>
-            <button
+            <motion.button
               onClick={handleEndInterview}
-              className="flex items-center gap-1 md:gap-sm px-3 py-2 rounded-lg bg-error-container text-on-error-container text-xs font-mono hover:brightness-110 transition-all animate-pulse"
+              whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', background: '#1a1a1a', color: '#ff7557', border: 'none', borderRadius: 99, fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'Space Grotesk' }}
             >
-              <span className="material-symbols-outlined text-sm">stop_circle</span>
-              <span className="hidden md:inline">End Interview</span>
-            </button>
+              ⏹ End
+            </motion.button>
           </div>
         </header>
 
-        {/* Conversation Canvas */}
-        <div ref={chatContainerRef} className="flex-1 overflow-y-auto custom-scrollbar px-md md:px-xl pt-xl pb-48">
-          <div className="max-w-3xl mx-auto space-y-xl">
+        {/* Chat messages */}
+        <div ref={chatContainerRef} className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '28px 24px 200px' }}>
+          <div style={{ maxWidth: 740, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 28 }}>
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-64 gap-md">
-                <div className="relative">
-                  <div className="w-14 h-14 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-                  </div>
-                </div>
-                <p className="text-on-surface-variant font-mono text-sm animate-pulse">Initializing AI Interviewer...</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 16 }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  style={{ width: 48, height: 48, borderRadius: '50%', border: '3px solid #e8e5de', borderTopColor: '#ff7557' }} />
+                <p style={{ fontSize: 13, color: '#888', fontFamily: 'monospace' }}>Initializing AI Interviewer...</p>
               </div>
             ) : !session && error ? (
-              <div className="flex flex-col items-center justify-center h-64 gap-md">
-                <span className="material-symbols-outlined text-error text-5xl">error</span>
-                <p className="text-on-surface-variant text-sm">{error}</p>
-                <button onClick={startNewInterview} className="px-lg py-md bg-primary text-on-primary font-bold rounded-lg active:scale-95 transition-all flex items-center gap-sm">
-                  <span className="material-symbols-outlined">refresh</span> Retry
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 16 }}>
+                <span style={{ fontSize: 48 }}>⚠</span>
+                <p style={{ fontSize: 14, color: '#666' }}>{error}</p>
+                <button onClick={startNewInterview}
+                  style={{ padding: '10px 24px', background: '#ff7557', color: '#1a0a04', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
+                  🔄 Retry
                 </button>
               </div>
             ) : messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 gap-md">
-                <div className="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center" style={{ boxShadow: '0 0 30px rgba(192,193,255,0.2)' }}>
-                  <span className="material-symbols-outlined text-on-primary-container text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>smart_toy</span>
-                </div>
-                <p className="text-on-surface-variant font-mono text-sm">Waiting for interview to begin...</p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 16 }}>
+                <div style={{ width: 60, height: 60, borderRadius: 18, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🤖</div>
+                <p style={{ fontSize: 13, color: '#888', fontFamily: 'monospace' }}>Waiting for interview to begin...</p>
               </div>
             ) : (
-              <div className="space-y-xl">
-                <AnimatePresence initial={false}>
-                  {messages.map((msg, idx) => (
-                    <motion.div
-                      key={idx}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                      className={`flex items-start gap-md md:gap-lg ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
-                    >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                        msg.role === 'user'
-                          ? 'bg-surface-container-highest border border-white/10'
-                          : 'bg-primary-container'
-                      }`} style={msg.role !== 'user' ? { boxShadow: '0 0 20px rgba(192,193,255,0.2)' } : {}}>
-                        <span className="material-symbols-outlined text-sm" style={msg.role !== 'user' ? { fontVariationSettings: "'FILL' 1" } : {}}>
-                          {msg.role === 'user' ? 'person' : 'smart_toy'}
-                        </span>
-                      </div>
-                      <div className="flex-1 pt-1 min-w-0">
-                        <h3 className="text-xs font-mono text-outline-variant uppercase mb-sm tracking-widest">
-                          {msg.role === 'user' ? (user?.name || 'You') : 'InterviewIQ AI'}
-                        </h3>
-                        {msg.role === 'assistant' && msg.feedback && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="mb-sm p-sm rounded-lg bg-secondary/5 border border-secondary/20 text-xs text-secondary font-mono italic"
-                          >
-                            "{msg.feedback}"
-                          </motion.div>
-                        )}
-                        <div className={`text-base md:text-lg leading-relaxed ${
-                          msg.role === 'user' ? 'text-on-surface-variant' : 'text-on-surface'
-                        }`}>
-                          {msg.content}
+              <AnimatePresence initial={false}>
+                {messages.map((msg, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: EASE }}
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}
+                  >
+                    {/* Avatar */}
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 12, flexShrink: 0,
+                      background: msg.role === 'user' ? '#e8e5de' : '#1a1a1a',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+                      border: msg.role !== 'user' ? '1px solid #1a1a1a' : '1px solid #d5d0c8'
+                    }}>
+                      {msg.role === 'user' ? '👤' : '🤖'}
+                    </div>
+                    {/* Bubble */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 10, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
+                        {msg.role === 'user' ? (user?.name || 'You') : 'InterviewIQ AI'}
+                      </p>
+                      {msg.role === 'assistant' && msg.feedback && (
+                        <div style={{ marginBottom: 8, padding: '8px 12px', background: '#f0f9f4', border: '1px solid #bbf7d0', borderRadius: 10, fontSize: 12, color: '#15803d', fontStyle: 'italic' }}>
+                          "{msg.feedback}"
                         </div>
+                      )}
+                      <div style={{
+                        padding: '14px 18px', borderRadius: msg.role === 'user' ? '16px 4px 16px 16px' : '4px 16px 16px 16px',
+                        background: msg.role === 'user' ? '#1a1a1a' : '#fff',
+                        border: '1.5px solid #1a1a1a',
+                        color: msg.role === 'user' ? 'rgba(247,245,240,0.9)' : '#1a1a1a',
+                        fontSize: 15, lineHeight: 1.7, fontWeight: 450,
+                      }}>
+                        {msg.content}
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             )}
 
             {/* Sending indicator */}
@@ -341,30 +348,35 @@ export default function Interview() {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-md py-md px-lg bg-surface-container-low rounded-2xl w-fit border border-white/5"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 18px', background: '#fff', border: '1.5px solid #1a1a1a', borderRadius: 14, width: 'fit-content' }}
               >
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div style={{ display: 'flex', gap: 4 }}>
+                  {[0, 150, 300].map(delay => (
+                    <motion.div key={delay}
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ duration: 0.8, delay: delay / 1000, repeat: Infinity }}
+                      style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff7557' }}
+                    />
+                  ))}
                 </div>
-                <span className="text-xs font-mono text-on-surface-variant">Analyzing sentiment & technical depth...</span>
+                <span style={{ fontSize: 12, color: '#888', fontFamily: 'monospace' }}>Analyzing sentiment & technical depth...</span>
               </motion.div>
             )}
           </div>
         </div>
 
-        {/* Chat Input */}
-        <div className="absolute bottom-0 left-0 w-full px-md md:px-xl pb-md pt-16 bg-gradient-to-t from-background via-background/95 to-transparent">
-          <div className="max-w-3xl mx-auto">
+        {/* Chat input */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, width: '100%', padding: '16px 24px 20px', background: 'linear-gradient(to top, #f7f5f0 70%, transparent)' }} className="int-input-bar">
+          <style>{`@media (min-width: 769px) { .int-input-bar { left: 240px; width: calc(100% - 240px); } }`}</style>
+          <div style={{ maxWidth: 740, margin: '0 auto' }}>
             {error && (
-              <div className="mb-sm flex items-center gap-sm p-sm rounded-lg bg-error-container/30 border border-error/30 text-error text-xs font-mono">
-                <span className="material-symbols-outlined text-sm">error</span>
-                {error}
+              <div style={{ marginBottom: 10, padding: '8px 12px', background: '#fff0ed', border: '1px solid #ff7557', borderRadius: 10, fontSize: 12, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                ⚠ {error}
               </div>
             )}
-
-            <form onSubmit={handleSend} className="relative flex items-end gap-sm md:gap-md bg-surface-container-lowest border border-white/5 rounded-2xl p-sm focus-within:border-primary/30 transition-all">
+            <form onSubmit={handleSend}
+              style={{ display: 'flex', alignItems: 'flex-end', gap: 10, background: '#fff', border: '1.5px solid #1a1a1a', borderRadius: 18, padding: '4px 4px 4px 4px', boxShadow: '0 4px 20px rgba(26,26,26,0.08)' }}
+            >
               <textarea
                 ref={textareaRef}
                 value={inputVal}
@@ -374,257 +386,197 @@ export default function Interview() {
                   e.target.style.height = `${e.target.scrollHeight}px`
                 }}
                 onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    handleSend(e)
-                  }
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(e) }
                 }}
-                placeholder="Type your response here... (Press Enter to send)"
+                placeholder="Type your response here... (Enter to send, Shift+Enter for new line)"
                 rows={1}
-                className="flex-1 bg-transparent border-0 outline-none resize-none max-h-36 py-sm px-sm md:px-md text-on-surface placeholder:text-outline-variant custom-scrollbar text-sm md:text-base leading-relaxed"
+                className="int-input"
+                style={{ flex: 1 }}
               />
               <motion.button
                 type="submit"
                 disabled={!inputVal.trim() || sending}
                 whileHover={inputVal.trim() ? { scale: 1.05 } : {}}
                 whileTap={inputVal.trim() ? { scale: 0.95 } : {}}
-                className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center shrink-0 disabled:opacity-30 disabled:scale-100 transition-all"
+                style={{
+                  width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                  background: inputVal.trim() ? '#ff7557' : '#e8e5de',
+                  border: 'none', cursor: inputVal.trim() ? 'pointer' : 'not-allowed',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                  transition: 'background 0.2s', margin: 4,
+                  color: inputVal.trim() ? '#1a0a04' : '#aaa'
+                }}
               >
-                <span className="material-symbols-outlined text-base">send</span>
+                ➤
               </motion.button>
             </form>
-            <p className="text-center mt-xs text-[10px] font-mono text-outline-variant">
+            <p style={{ textAlign: 'center', marginTop: 8, fontSize: 10, color: '#aaa', fontFamily: 'monospace' }}>
               Keep it professional. The AI evaluates confidence, accuracy, and structure.
             </p>
           </div>
         </div>
       </main>
 
-      {/* ── UPGRADE/PAYMENT MODAL ────────────────────────────────────── */}
+      {/* ── UPGRADE/PAYMENT MODAL ─────────────────────────────────────────── */}
       <AnimatePresence>
         {showUpgradeModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-md bg-black/80 backdrop-blur-md"
+            style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'rgba(26,26,26,0.7)', backdropFilter: 'blur(10px)' }}
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.92, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              exit={{ scale: 0.92, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="w-full max-w-[500px] bg-surface-container-lowest border border-white/10 rounded-2xl p-xl shadow-2xl flex flex-col gap-lg"
+              style={{ width: '100%', maxWidth: 500, background: '#fff', border: '1.5px solid #1a1a1a', borderRadius: 24, padding: 36, boxShadow: '0 24px 80px rgba(26,26,26,0.25)', display: 'flex', flexDirection: 'column', gap: 24 }}
             >
-              {/* Close button */}
-              <div className="flex justify-end -mb-xl">
-                <button
-                  onClick={handleCloseUpgradeModal}
-                  className="text-outline hover:text-on-surface transition-colors"
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
+              {/* Close */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={handleCloseUpgradeModal}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30 }}>✕</button>
               </div>
 
-              {/* STEP 1: PLAN SELECTOR */}
+              {/* PLAN STEP */}
               {paymentStep === 'plan' && (
                 <>
-                  <div className="text-center space-y-xs">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center mx-auto mb-sm">
-                      <span className="material-symbols-outlined text-primary text-2xl font-bold animate-pulse">workspace_premium</span>
-                    </div>
-                    <h2 className="text-2xl font-bold font-display text-on-surface tracking-tighter">Choose Your AI Power</h2>
-                    <p className="text-xs text-on-surface-variant max-w-xs mx-auto">
-                      Upgrade to Premium to continue. Swap models mid-interview and get infinite questions.
-                    </p>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 24 }}>⭐</div>
+                    <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 8 }}>Choose Your AI Power</h2>
+                    <p style={{ fontSize: 13, color: '#666', maxWidth: 300, margin: '0 auto' }}>Upgrade to Premium to continue. Swap models mid-interview and get infinite questions.</p>
                   </div>
 
-                  <div className="space-y-md mt-sm">
-                    {/* Models Grid */}
-                    <div className="grid grid-cols-2 gap-sm">
-                      <button
-                        onClick={() => setModelType('gemini')}
-                        className={`p-md rounded-xl border flex flex-col gap-xs text-left transition-all ${
-                          modelType === 'gemini' ? 'border-primary bg-primary/5 shadow-[0_0_15px_rgba(192,193,255,0.15)]' : 'border-white/5 bg-white/2 hover:bg-white/5'
-                        }`}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    {[
+                      { id: 'gemini', label: 'Google Gemini', sub: '1.5 Pro · Deep Analytical Insights', icon: '✦', accent: '#4285f4' },
+                      { id: 'gpt', label: 'ChatGPT', sub: 'GPT-4o · Precise Coding Synthesis', icon: '⊕', accent: '#10a37f' },
+                    ].map(m => (
+                      <motion.button key={m.id} onClick={() => setModelType(m.id)}
+                        whileHover={{ borderColor: m.accent }}
+                        style={{
+                          padding: '16px', borderRadius: 14, border: `1.5px solid ${modelType === m.id ? m.accent : '#e8e5de'}`,
+                          background: modelType === m.id ? `${m.accent}10` : '#f7f5f0', cursor: 'pointer', textAlign: 'left',
+                          transition: 'border-color 0.2s, background 0.2s',
+                          boxShadow: modelType === m.id ? `0 0 15px ${m.accent}25` : 'none'
+                        }}
                       >
-                        <div className="flex items-center gap-xs font-bold text-sm text-on-surface">
-                          <span className="material-symbols-outlined text-primary text-base">auto_awesome</span>
-                          Google Gemini
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 14, color: '#1a1a1a', marginBottom: 4 }}>
+                          <span style={{ color: m.accent }}>{m.icon}</span>
+                          {m.label}
                         </div>
-                        <span className="text-[10px] text-on-surface-variant">1.5 Pro · Deep Analytical Insights</span>
-                      </button>
-                      <button
-                        onClick={() => setModelType('chatgpt')}
-                        className={`p-md rounded-xl border flex flex-col gap-xs text-left transition-all ${
-                          modelType === 'chatgpt' ? 'border-secondary bg-secondary/5 shadow-[0_0_15px_rgba(76,215,246,0.15)]' : 'border-white/5 bg-white/2 hover:bg-white/5'
-                        }`}
-                      >
-                        <div className="flex items-center gap-xs font-bold text-sm text-on-surface">
-                          <span className="material-symbols-outlined text-secondary text-base">bolt</span>
-                          ChatGPT
-                        </div>
-                        <span className="text-[10px] text-on-surface-variant">GPT-4o · Precise Coding Synthesis</span>
-                      </button>
-                    </div>
-
-                    {/* Feature Perks */}
-                    <div className="p-md bg-white/3 rounded-xl border border-white/5 space-y-sm">
-                      <div className="flex items-center gap-sm text-sm text-on-surface">
-                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
-                        <span>Unlimited technical Q&A sessions</span>
-                      </div>
-                      <div className="flex items-center gap-sm text-sm text-on-surface">
-                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
-                        <span>Personalized shortcoming lists & roadmaps</span>
-                      </div>
-                      <div className="flex items-center gap-sm text-sm text-on-surface">
-                        <span className="material-symbols-outlined text-primary text-sm">check_circle</span>
-                        <span>PDF reports & future Voice Mode access</span>
-                      </div>
-                    </div>
+                        <p style={{ fontSize: 11, color: '#888' }}>{m.sub}</p>
+                      </motion.button>
+                    ))}
                   </div>
 
-                  <div className="flex justify-between items-center mt-md pt-md border-t border-white/5">
+                  <div style={{ padding: '14px 16px', background: '#f7f5f0', border: '1px solid #e8e5de', borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {['Unlimited technical Q&A sessions', 'Personalized shortcoming lists & roadmaps', 'PDF reports & future Voice Mode access'].map(f => (
+                      <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#333' }}>
+                        <span style={{ color: '#22c55e', fontWeight: 800 }}>✓</span>
+                        {f}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16, borderTop: '1px solid #e8e5de' }}>
                     <div>
-                      <span className="text-xs text-on-surface-variant font-mono">Monthly plan</span>
-                      <div className="flex items-baseline gap-xs">
-                        <span className="text-3xl font-bold font-display text-on-surface">$15</span>
-                        <span className="text-sm text-on-surface-variant">/mo</span>
+                      <div style={{ fontSize: 11, color: '#888', marginBottom: 2 }}>Monthly plan</div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                        <span style={{ fontFamily: 'Space Grotesk', fontSize: 32, fontWeight: 900, color: '#1a1a1a' }}>$15</span>
+                        <span style={{ fontSize: 14, color: '#888' }}>/mo</span>
                       </div>
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setPaymentStep('checkout')}
-                      className="bg-primary text-on-primary font-bold px-lg py-md rounded-xl hover:shadow-[0_0_30px_rgba(192,193,255,0.3)] transition-all text-sm flex items-center gap-xs"
-                    >
-                      Choose Plan
-                      <span className="material-symbols-outlined text-base">arrow_forward</span>
+                    <motion.button onClick={() => setPaymentStep('checkout')}
+                      whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+                      className="coral-btn-int"
+                      style={{ padding: '12px 24px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      Choose Plan →
                     </motion.button>
                   </div>
                 </>
               )}
 
-              {/* STEP 2: SIMULATED PAYMENT CHECKOUT */}
+              {/* CHECKOUT STEP */}
               {paymentStep === 'checkout' && (
-                <form onSubmit={handleUpgradePayment} className="space-y-md">
-                  <div className="text-center space-y-xs">
-                    <h2 className="text-xl font-bold font-display text-on-surface">Secure Sandbox Checkout</h2>
-                    <p className="text-xs text-on-surface-variant">Please complete the payment using this free checkout simulation.</p>
+                <form onSubmit={handleUpgradePayment} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 22, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6 }}>🔒 Secure Sandbox Checkout</h2>
+                    <p style={{ fontSize: 13, color: '#666' }}>Complete the payment using this free checkout simulation.</p>
                   </div>
 
-                  <div className="space-y-sm">
-                    {/* Cardholder Name */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="text-[10px] font-mono text-outline-variant uppercase">Cardholder Name</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="John Doe"
-                        value={cardName}
-                        onChange={e => setCardName(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-md py-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 text-sm"
-                      />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {[
+                      { label: 'Cardholder Name', value: cardName, setter: setCardName, type: 'text', placeholder: 'John Doe' },
+                    ].map(field => (
+                      <div key={field.label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{field.label}</label>
+                        <input type={field.type} required placeholder={field.placeholder} value={field.value}
+                          onChange={e => field.setter(e.target.value)}
+                          style={{ padding: '11px 14px', border: '1.5px solid #d5d0c8', borderRadius: 12, fontSize: 14, color: '#1a1a1a', background: '#fff', outline: 'none', fontFamily: 'Inter, sans-serif' }} />
+                      </div>
+                    ))}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Card Number</label>
+                      <input type="text" required value={cardNumber} onChange={e => setCardNumber(e.target.value)}
+                        style={{ padding: '11px 14px', border: '1.5px solid #d5d0c8', borderRadius: 12, fontSize: 14, color: '#1a1a1a', background: '#fff', outline: 'none', fontFamily: 'monospace' }} />
                     </div>
-
-                    {/* Card Number */}
-                    <div className="flex flex-col gap-xs">
-                      <label className="text-[10px] font-mono text-outline-variant uppercase">Card Number</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline-variant text-base">credit_card</span>
-                        <input
-                          type="text"
-                          required
-                          value={cardNumber}
-                          onChange={e => setCardNumber(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-md py-sm text-on-surface font-mono focus:outline-none focus:border-primary/50 text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Expiry & CVC */}
-                    <div className="grid grid-cols-2 gap-sm">
-                      <div className="flex flex-col gap-xs">
-                        <label className="text-[10px] font-mono text-outline-variant uppercase">Expiry Date</label>
-                        <input
-                          type="text"
-                          required
-                          value={cardExpiry}
-                          onChange={e => setCardExpiry(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-md py-sm text-on-surface font-mono text-center focus:outline-none focus:border-primary/50 text-sm"
-                        />
-                      </div>
-                      <div className="flex flex-col gap-xs">
-                        <label className="text-[10px] font-mono text-outline-variant uppercase">CVC / CVV</label>
-                        <input
-                          type="text"
-                          required
-                          value={cardCvc}
-                          onChange={e => setCardCvc(e.target.value)}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl px-md py-sm text-on-surface font-mono text-center focus:outline-none focus:border-primary/50 text-sm"
-                        />
-                      </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                      {[
+                        { label: 'Expiry', value: cardExpiry, setter: setCardExpiry },
+                        { label: 'CVC', value: cardCvc, setter: setCardCvc },
+                      ].map(f => (
+                        <div key={f.label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: 11, fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{f.label}</label>
+                          <input type="text" required value={f.value} onChange={e => f.setter(e.target.value)}
+                            style={{ padding: '11px 14px', border: '1.5px solid #d5d0c8', borderRadius: 12, fontSize: 14, color: '#1a1a1a', background: '#fff', outline: 'none', fontFamily: 'monospace', textAlign: 'center' }} />
+                        </div>
+                      ))}
                     </div>
                   </div>
 
                   {error && (
-                    <div className="p-sm bg-error-container/20 border border-error/30 text-error rounded-xl text-xs font-mono flex items-center gap-xs">
-                      <span className="material-symbols-outlined text-sm">warning</span>
-                      {error}
-                    </div>
+                    <div style={{ background: '#fff0ed', border: '1px solid #ff7557', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#c0392b' }}>⚠ {error}</div>
                   )}
 
-                  <div className="flex gap-sm pt-md border-t border-white/5">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentStep('plan')}
-                      disabled={processingPayment}
-                      className="flex-1 py-md border border-white/10 text-on-surface-variant font-bold rounded-xl hover:bg-white/5 transition-all text-sm"
-                    >
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button type="button" onClick={() => setPaymentStep('plan')} disabled={processingPayment}
+                      style={{ flex: 1, padding: '12px', border: '1.5px solid #1a1a1a', borderRadius: 99, background: '#fff', color: '#1a1a1a', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
                       Back
                     </button>
-                    <motion.button
-                      type="submit"
-                      disabled={processingPayment}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="flex-1 py-md bg-primary text-on-primary font-bold rounded-xl hover:opacity-90 active:scale-95 transition-all text-sm flex items-center justify-center gap-xs"
-                    >
-                      {processingPayment ? 'Processing...' : 'Complete Payment'}
-                      <span className="material-symbols-outlined text-base">lock</span>
+                    <motion.button type="submit" disabled={processingPayment}
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      className="coral-btn-int"
+                      style={{ flex: 1, padding: '12px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      {processingPayment ? '⏳ Processing...' : '🔒 Complete Payment'}
                     </motion.button>
                   </div>
                 </form>
               )}
 
-              {/* STEP 3: CELEBRATION SUCCESS PAGE */}
+              {/* SUCCESS STEP */}
               {paymentStep === 'success' && (
-                <div className="text-center py-md flex flex-col items-center gap-md">
+                <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
                   <motion.div
                     initial={{ scale: 0.5, rotate: -45 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 12 }}
-                    className="w-16 h-16 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center"
+                    style={{ width: 64, height: 64, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}
                   >
-                    <span className="material-symbols-outlined text-primary text-3xl font-bold">verified</span>
+                    ✓
                   </motion.div>
-
-                  <div className="space-y-xs">
-                    <h2 className="text-2xl font-bold font-display text-on-surface">Payment Successful!</h2>
-                    <p className="text-sm text-on-surface-variant max-w-sm">
-                      Your account has been upgraded to <strong className="text-primary font-semibold">Premium Tier</strong>. Unlimited sessions, full shortcomings roadmap, and advanced models are unlocked!
+                  <div>
+                    <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 8 }}>Payment Successful!</h2>
+                    <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                      Your account has been upgraded to <strong style={{ color: '#ff7557' }}>Premium Tier</strong>. Unlimited sessions, full shortcomings roadmap, and advanced models are unlocked!
                     </p>
                   </div>
-
-                  <motion.button
-                    onClick={handleCloseUpgradeModal}
-                    whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(192,193,255,0.4)' }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full mt-lg py-md bg-primary text-on-primary font-bold rounded-xl active:scale-95 transition-all text-sm flex items-center justify-center gap-xs shadow-lg shadow-primary/20"
-                  >
-                    Unlock & Continue Interview
-                    <span className="material-symbols-outlined text-base font-bold">arrow_forward</span>
+                  <motion.button onClick={handleCloseUpgradeModal}
+                    whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                    className="coral-btn-int"
+                    style={{ width: '100%', padding: '14px', fontSize: 15, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    🚀 Unlock & Continue Interview
                   </motion.button>
                 </div>
               )}
