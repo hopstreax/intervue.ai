@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { authService, interviewService } from '../services'
+import { useTheme } from '../context/ThemeContext'
 import { HiMenu, HiX, HiCheck, HiLockClosed, HiChevronRight, HiArrowRight } from 'react-icons/hi'
 import { BsStopCircleFill, BsExclamationTriangleFill, BsSendFill, BsCpuFill, BsBarChartFill } from 'react-icons/bs'
 import { TbBrain } from 'react-icons/tb'
@@ -12,6 +13,7 @@ const EASE = [0.16, 1, 0.3, 1]
 
 export default function Interview() {
   const navigate = useNavigate()
+  const { isDark } = useTheme()
   const [session, setSession] = useState(null)
   const [messages, setMessages] = useState([])
   const [inputVal, setInputVal] = useState('')
@@ -133,19 +135,17 @@ export default function Interview() {
   }
 
   return (
-    <div style={{ background: '#f7f5f0', height: '100vh', display: 'flex', overflow: 'hidden', fontFamily: "'Inter', 'DM Sans', sans-serif" }}>
+    <div className="theme-page" style={{ height: '100vh', display: 'flex', overflow: 'hidden', fontFamily: "'Inter', 'DM Sans', sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        .int-input { width: 100%; background: transparent; border: none; outline: none; resize: none; max-height: 140px; padding: 12px 14px; font-size: 14px; font-family: Inter, sans-serif; color: #1a1a1a; line-height: 1.6; }
-        .int-input::placeholder { color: #aaa; }
-        .coral-btn-int { background: #ff7557; color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s; }
-        .coral-btn-int:hover { background: #ff5e3a; }
-        .int-sidebar { display: none; flex-direction: column; height: 100vh; width: 240px; background: #fff; border-right: 1.5px solid #1a1a1a; padding: 0; position: fixed; left: 0; top: 0; z-index: 40; }
+        .int-input { width: 100%; background: transparent; border: none; outline: none; resize: none; max-height: 140px; padding: 12px 14px; font-size: 14px; font-family: Inter, sans-serif; color: var(--text); line-height: 1.6; }
+        .int-input::placeholder { color: var(--text-faint); }
+        .int-sidebar { display: none; flex-direction: column; height: 100vh; width: 240px; background: var(--sidebar-bg); border-right: 1.5px solid var(--border-soft); padding: 0; position: fixed; left: 0; top: 0; z-index: 40; transition: background 0.3s, border-color 0.3s; }
         @media (min-width: 769px) { .int-sidebar { display: flex; } .int-main { margin-left: 240px; } }
         .chat-scroll::-webkit-scrollbar { width: 4px; }
         .chat-scroll::-webkit-scrollbar-track { background: transparent; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(26,26,26,0.1); border-radius: 99px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 99px; }
       `}</style>
 
       {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
@@ -164,29 +164,29 @@ export default function Interview() {
 
       <div className="int-sidebar" style={{ flexShrink: 0 }}>
         {/* Logo */}
-        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #e8e5de', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 30, height: 30, background: '#1a1a1a', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 30, height: 30, background: 'var(--text)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ color: '#ff7557', fontSize: 14, fontWeight: 900, fontFamily: 'Space Grotesk' }}>IQ</span>
             </div>
-            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: '#1a1a1a', letterSpacing: '-0.03em' }}>InterviewIQ</span>
+            <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 16, color: 'var(--text)', letterSpacing: '-0.03em' }}>InterviewIQ</span>
           </Link>
         </div>
 
         {/* Session stats */}
-        <div style={{ padding: '16px 16px', borderBottom: '1px solid #e8e5de' }}>
-          <p style={{ fontSize: 10, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Session Stats</p>
-          <div style={{ background: '#f7f5f0', border: '1px solid #e8e5de', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ padding: '16px 16px', borderBottom: '1px solid var(--border-soft)' }}>
+          <p style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>Session Stats</p>
+          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border-soft)', borderRadius: 14, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {[
               { label: 'Clarity Rating', val: metrics.clarity, color: '#ff7557' },
               { label: 'Technical Depth', val: metrics.accuracy, color: '#4285f4' },
             ].map(m => (
               <div key={m.label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#666', marginBottom: 5 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-muted)', marginBottom: 5 }}>
                   <span style={{ fontWeight: 600 }}>{m.label}</span>
                   <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{m.val}%</span>
                 </div>
-                <div style={{ height: 5, background: '#e8e5de', borderRadius: 99, overflow: 'hidden' }}>
+                <div style={{ height: 5, background: 'var(--border-soft)', borderRadius: 99, overflow: 'hidden' }}>
                   <motion.div animate={{ width: `${m.val}%` }} transition={{ duration: 0.6, ease: EASE }}
                     style={{ height: '100%', background: m.color, borderRadius: 99 }} />
                 </div>
@@ -194,8 +194,8 @@ export default function Interview() {
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, padding: '8px 12px', background: '#fff', border: '1px solid #e8e5de', borderRadius: 10 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#555' }}>Q Answered</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, padding: '8px 12px', background: 'var(--surface)', border: '1px solid var(--border-soft)', borderRadius: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Q Answered</span>
             <span style={{ fontSize: 18, fontWeight: 900, color: '#ff7557', fontFamily: 'Space Grotesk' }}>{metrics.questionsAnswered}</span>
           </div>
         </div>

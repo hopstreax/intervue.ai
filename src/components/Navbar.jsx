@@ -64,17 +64,15 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200
-                bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10
-                text-gray-600 dark:text-gray-300 hover:text-cyan-500 dark:hover:text-cyan-400
-                border border-gray-200 dark:border-white/10"
-              aria-label="Toggle theme"
-            >
-              {isDark ? <HiSun className="w-4 h-4" /> : <HiMoon className="w-4 h-4" />}
-            </button>
+            {/* Theme toggle — pill switch */}
+            <label className="theme-toggle" title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+              <input type="checkbox" checked={isDark} onChange={toggleTheme} />
+              <div className="toggle-track">
+                <div className="toggle-thumb">
+                  <span className="toggle-icon">{isDark ? '🌙' : '☀️'}</span>
+                </div>
+              </div>
+            </label>
 
             {/* Auth area — Desktop */}
             <div className="hidden md:flex items-center gap-2">

@@ -7,6 +7,7 @@ import { BsBarChartFill, BsMap, BsPlusCircleFill } from 'react-icons/bs'
 import { TbBrain } from 'react-icons/tb'
 import { MdDownloadForOffline, MdOutlineRefresh } from 'react-icons/md'
 import { FaBookOpen, FaBullseye, FaTrophy, FaListCheck } from 'react-icons/fa6'
+import { useTheme } from '../context/ThemeContext'
 
 const EASE = [0.16, 1, 0.3, 1]
 
@@ -125,8 +126,9 @@ function ScoreBar({ item, idx }) {
 
 
 function Sidebar({ overallScore, onSignOut, onNewInterview }) {
+  const { isDark } = useTheme()
   return (
-    <aside style={{ flexDirection: 'column', height: '100vh', width: 240, background: '#fff', borderRight: '1.5px solid #1a1a1a', padding: 0, position: 'fixed', left: 0, top: 0, zIndex: 40 }} className="sum-sidebar">
+    <aside style={{ flexDirection: 'column', height: '100vh', width: 240, background: 'var(--sidebar-bg)', borderRight: '1.5px solid var(--border-soft)', padding: 0, position: 'fixed', left: 0, top: 0, zIndex: 40, transition: 'background 0.3s, border-color 0.3s' }} className="sum-sidebar">
       <style>{`.sum-sidebar { display: none; } @media (min-width: 769px) { .sum-sidebar { display: flex; } }`}</style>
       {/* Logo */}
       <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid #e8e5de' }}>
@@ -180,6 +182,7 @@ function Sidebar({ overallScore, onSignOut, onNewInterview }) {
 /* ── Main Summary Component ───────────────────────────────────────────── */
 export default function Summary() {
   const navigate = useNavigate()
+  const { isDark } = useTheme()
   const user = authService.getUser()
   const [evalData, setEvalData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -261,17 +264,16 @@ export default function Summary() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f0', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex' }}>
+    <div className="theme-page" style={{ minHeight: '100vh', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        .coral-btn-sm { background: #ff7557; color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s; }
-        .coral-btn-sm:hover { background: #ff5e3a; }
-        .sum-tab { padding: 10px 18px; border-radius: 12px 12px 0 0; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: transparent; transition: background 0.2s, color 0.2s; font-family: Space Grotesk, sans-serif; border-bottom: 2px solid transparent; }
-        .sum-tab.active { color: #ff7557; border-bottom-color: #ff7557; background: #fff6f4; }
-        .sum-tab:not(.active) { color: #888; }
-        .sum-tab:not(.active):hover { background: rgba(26,26,26,0.04); color: #555; }
-        .bento-sm { background: #fff; border: 1.5px solid #1a1a1a; border-radius: 20px; }
+        .coral-btn-sm { background: var(--accent); color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s; }
+        .coral-btn-sm:hover { background: var(--accent-hover); }
+        .sum-tab { padding: 10px 18px; border-radius: 12px 12px 0 0; border: none; cursor: pointer; font-size: 14px; font-weight: 700; background: transparent; transition: background 0.2s, color 0.2s; font-family: Space Grotesk, sans-serif; border-bottom: 2px solid transparent; color: var(--text-muted); }
+        .sum-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--accent-light); }
+        .sum-tab:not(.active):hover { background: var(--surface-3); color: var(--text); }
+        .bento-sm { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; transition: background 0.3s, border-color 0.3s; }
       `}</style>
 
       <Sidebar overallScore={overallScore} onSignOut={handleSignOut} onNewInterview={handleNewInterview} />

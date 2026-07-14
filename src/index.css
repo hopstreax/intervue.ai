@@ -5,9 +5,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── CSS Custom Properties (Stitch Design Tokens) ───────────────── */
+/* ─── CSS Custom Properties — Light / Dark Themes ─────────────── */
 :root {
-  /* === RGB Channels — enable bg-primary/10, text-primary/50 etc. === */
+  /* === RGB Channels === */
   --rgb-primary:                    192, 193, 255;
   --rgb-primary-container:          128, 131, 255;
   --rgb-secondary:                  76, 215, 246;
@@ -17,6 +17,68 @@
   --rgb-surface-container-low:      28, 27, 27;
   --rgb-surface-container:          32, 31, 31;
   --rgb-surface-container-high:     42, 42, 42;
+
+  /* === App Theme Tokens — Light Default === */
+  --bg:               #f7f5f0;
+  --surface:          #ffffff;
+  --surface-2:        #f7f5f0;
+  --surface-3:        #f0ede8;
+  --border:           #1a1a1a;
+  --border-soft:      #e8e5de;
+  --border-input:     #d5d0c8;
+  --text:             #1a1a1a;
+  --text-muted:       #666666;
+  --text-faint:       #aaaaaa;
+  --text-placeholder: #aaa8a2;
+  --accent:           #ff7557;
+  --accent-hover:     #ff5e3a;
+  --accent-light:     #fff6f4;
+  --accent-border:    #ffd4c8;
+  --input-bg:         #ffffff;
+  --input-border:     #d5d0c8;
+  --nav-bg:           rgba(247,245,240,0.92);
+  --sidebar-bg:       #ffffff;
+  --card-shadow:      0 8px 40px rgba(26,26,26,0.08);
+  --green-bg:         #f0f9f4;
+  --green-border:     #bbf7d0;
+  --green-text:       #15803d;
+  --red-bg:           #fff0ed;
+  --red-border:       #ffd4c8;
+  --red-text:         #c0392b;
+  --yellow-bg:        #fefce8;
+  --yellow-border:    #fde68a;
+}
+
+/* === Dark Mode Overrides === */
+.dark {
+  --bg:               #111111;
+  --surface:          #1c1c1c;
+  --surface-2:        #242424;
+  --surface-3:        #2e2e2e;
+  --border:           #3a3a3a;
+  --border-soft:      #2a2a2a;
+  --border-input:     #3a3a3a;
+  --text:             #f0ede8;
+  --text-muted:       #999999;
+  --text-faint:       #555555;
+  --text-placeholder: #666666;
+  --accent:           #ff7557;
+  --accent-hover:     #ff6644;
+  --accent-light:     rgba(255,117,87,0.12);
+  --accent-border:    rgba(255,117,87,0.3);
+  --input-bg:         #1e1e1e;
+  --input-border:     #3a3a3a;
+  --nav-bg:           rgba(17,17,17,0.92);
+  --sidebar-bg:       #1c1c1c;
+  --card-shadow:      0 8px 40px rgba(0,0,0,0.5);
+  --green-bg:         rgba(34,197,94,0.08);
+  --green-border:     rgba(34,197,94,0.25);
+  --green-text:       #4ade80;
+  --red-bg:           rgba(255,117,87,0.08);
+  --red-border:       rgba(255,117,87,0.25);
+  --red-text:         #ff8066;
+  --yellow-bg:        rgba(251,191,36,0.08);
+  --yellow-border:    rgba(251,191,36,0.25);
 }
 
 /* ─── Base Layer ──────────────────────────────────────────────────── */
@@ -27,6 +89,7 @@
 
   html {
     scroll-behavior: smooth;
+    transition: background-color 0.3s ease;
   }
 
   body {
@@ -45,9 +108,211 @@
   }
 
   ::selection {
-    background-color: #8083ff;
-    color: #0d0096;
+    background-color: #ff7557;
+    color: #ffffff;
   }
+}
+
+/* ─── Theme-aware page backgrounds ───────────────────────────────── */
+.theme-page {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+}
+
+.theme-surface {
+  background: var(--surface);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.theme-nav {
+  background: var(--nav-bg) !important;
+  border-color: var(--border) !important;
+  backdrop-filter: blur(18px);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.theme-sidebar {
+  background: var(--sidebar-bg) !important;
+  border-color: var(--border-soft) !important;
+  transition: background 0.3s ease;
+}
+
+/* ─── Dark mode page overrides ──────────────────────────────────── */
+.dark .theme-page {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Login / Signup input fields */
+.dark .lp-input {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text) !important;
+}
+.dark .lp-input:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px rgba(255,117,87,0.15) !important;
+}
+.dark .lp-input::placeholder {
+  color: var(--text-faint) !important;
+}
+.dark .lp-input-no-icon { padding-left: 14px; }
+
+/* OAuth buttons */
+.dark .oauth-btn {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+.dark .oauth-btn:hover {
+  border-color: var(--text) !important;
+  background: var(--surface-2) !important;
+}
+
+/* Cards in dark mode */
+.dark .theme-card {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+/* Interview input */
+.dark .int-input {
+  color: var(--text) !important;
+}
+.dark .int-input::placeholder {
+  color: var(--text-faint) !important;
+}
+
+/* Interview sidebar */
+.dark .int-sidebar {
+  background: var(--sidebar-bg) !important;
+  border-color: var(--border-soft) !important;
+}
+
+/* Chat scroll */
+.dark .chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Coral buttons stay the same in dark */
+.coral-solid,
+.coral-btn-int,
+.coral-btn-ru,
+.coral-btn-sm {
+  background: var(--accent);
+  color: #1a0a04;
+  border: none;
+  cursor: pointer;
+  font-weight: 800;
+  border-radius: 99px;
+  transition: background 0.2s, transform 0.15s;
+}
+.coral-solid:hover,
+.coral-btn-int:hover,
+.coral-btn-ru:hover,
+.coral-btn-sm:hover {
+  background: var(--accent-hover);
+}
+.coral-solid:active,
+.coral-btn-int:active,
+.coral-btn-ru:active {
+  transform: scale(0.97);
+}
+.coral-solid:disabled,
+.coral-btn-ru:disabled,
+.coral-btn-int:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Summary tab */
+.sum-tab {
+  padding: 10px 18px;
+  border-radius: 12px 12px 0 0;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  background: transparent;
+  transition: background 0.2s, color 0.2s;
+  font-family: Space Grotesk, sans-serif;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+}
+.sum-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--accent-light);
+}
+.sum-tab:not(.active):hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.bento-sm {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+}
+
+/* ─── Toggle Switch ─────────────────────────────────────────────── */
+.theme-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: 8px;
+}
+
+.theme-toggle input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-track {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: #d5d0c8;
+  border-radius: 13px;
+  transition: background 0.3s ease;
+  border: 1.5px solid rgba(0,0,0,0.1);
+}
+
+.dark .toggle-track {
+  background: #ff7557;
+  border-color: rgba(255,117,87,0.4);
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dark .toggle-thumb {
+  transform: translateX(22px);
+  background: #fff;
+}
+
+.toggle-icon {
+  font-size: 11px;
+  line-height: 1;
+  transition: opacity 0.2s;
 }
 
 /* ─── Component Layer ─────────────────────────────────────────────── */
@@ -229,4 +494,3 @@
     stroke-dashoffset: 0;
   }
 }
-

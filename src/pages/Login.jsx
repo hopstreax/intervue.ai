@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiArrowRight } from 'react-icons/hi'
 import { HiSparkles } from 'react-icons/hi2'
 import { authService } from '../services'
+import { useTheme } from '../context/ThemeContext'
 
 const EASE = [0.16, 1, 0.3, 1]
 
@@ -21,6 +22,7 @@ const fadeUp = {
 
 export default function Login() {
   const navigate = useNavigate()
+  const { isDark, toggleTheme } = useTheme()
   const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [error, setError] = useState('')
@@ -49,18 +51,15 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f0', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div className="theme-page" style={{ minHeight: '100vh', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex', flexDirection: 'column' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        .lp-input { width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid #d5d0c8; border-radius: 12px; font-size: 14px; font-family: Inter, sans-serif; background: #fff; color: #1a1a1a; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
-        .lp-input:focus { border-color: #ff7557; box-shadow: 0 0 0 3px rgba(255,117,87,0.12); }
-        .lp-input::placeholder { color: #aaa8a2; }
-        .coral-solid { background: #ff7557; color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s, transform 0.15s; }
-        .coral-solid:hover { background: #ff5e3a; }
-        .coral-solid:active { transform: scale(0.97); }
-        .oauth-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1.5px solid #d5d0c8; border-radius: 12px; background: #fff; color: #1a1a1a; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-        .oauth-btn:hover { border-color: #1a1a1a; background: #f0ede8; }
+        .lp-input { width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid var(--input-border); border-radius: 12px; font-size: 14px; font-family: Inter, sans-serif; background: var(--input-bg); color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .lp-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,117,87,0.12); }
+        .lp-input::placeholder { color: var(--text-placeholder); }
+        .oauth-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1.5px solid var(--border-soft); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .oauth-btn:hover { border-color: var(--border); background: var(--surface-2); }
       `}</style>
 
       {/* NAV */}
@@ -68,16 +67,25 @@ export default function Login() {
         initial={{ y: -48, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.55, ease: EASE }}
-        style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(247,245,240,0.9)', backdropFilter: 'blur(18px)', borderBottom: '1.5px solid #1a1a1a', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--nav-bg)', backdropFilter: 'blur(18px)', borderBottom: '1.5px solid var(--border)', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.3s, border-color 0.3s' }}
       >
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 32, height: 32, background: '#1a1a1a', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 32, height: 32, background: 'var(--text)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ color: '#ff7557', fontSize: 16, fontWeight: 900, fontFamily: 'Space Grotesk' }}>IQ</span>
           </div>
-          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#1a1a1a', letterSpacing: '-0.03em' }}>InterviewIQ</span>
+          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--text)', letterSpacing: '-0.03em' }}>InterviewIQ</span>
         </Link>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <span style={{ fontSize: 13, color: '#666', alignSelf: 'center' }}>No account?</span>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Theme Toggle */}
+          <label className="theme-toggle" title={isDark ? 'Switch to Light' : 'Switch to Dark'} style={{ marginRight: 4 }}>
+            <input type="checkbox" checked={isDark} onChange={toggleTheme} />
+            <div className="toggle-track">
+              <div className="toggle-thumb">
+                <span className="toggle-icon">{isDark ? '🌙' : '☀️'}</span>
+              </div>
+            </div>
+          </label>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)', alignSelf: 'center' }}>No account?</span>
           <Link to="/signup" style={{ textDecoration: 'none', padding: '7px 18px', borderRadius: 99, background: '#ff7557', color: '#1a0a04', fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em' }}>
             Sign up free
           </Link>
@@ -98,12 +106,12 @@ export default function Login() {
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.05 }}
-              style={{ width: 52, height: 52, borderRadius: 16, background: '#1a1a1a', border: '1.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}
+              style={{ width: 52, height: 52, borderRadius: 16, background: 'var(--text)', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}
             >
               <HiSparkles size={22} color="#ff7557" />
             </motion.div>
-            <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 28, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6 }}>Welcome back</h1>
-            <p style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>Sign in to continue your interview prep journey.</p>
+            <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 28, fontWeight: 900, color: 'var(--text)', letterSpacing: '-0.04em', marginBottom: 6 }}>Welcome back</h1>
+            <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>Sign in to continue your interview prep journey.</p>
           </motion.div>
 
           {/* Card */}
@@ -111,7 +119,7 @@ export default function Login() {
             key={shakeKey}
             variants={error && shakeKey > 0 ? shake : {}}
             animate={error && shakeKey > 0 ? 'shake' : ''}
-            style={{ background: '#fff', border: '1.5px solid #1a1a1a', borderRadius: 24, padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20, boxShadow: '0 8px 40px rgba(26,26,26,0.08)' }}
+            style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', borderRadius: 24, padding: '32px 36px', display: 'flex', flexDirection: 'column', gap: 20, boxShadow: 'var(--card-shadow)', transition: 'background 0.3s, border-color 0.3s' }}
           >
             {/* OAuth */}
             <motion.div variants={fadeUp} custom={1} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -134,18 +142,18 @@ export default function Login() {
 
             {/* Divider */}
             <motion.div variants={fadeUp} custom={2} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ flex: 1, height: 1, background: '#e8e5de' }} />
-              <span style={{ fontSize: 11, fontWeight: 600, color: '#aaa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>or continue with email</span>
-              <div style={{ flex: 1, height: 1, background: '#e8e5de' }} />
+              <div style={{ flex: 1, height: 1, background: 'var(--border-soft)' }} />
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>or continue with email</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-soft)' }} />
             </motion.div>
 
             {/* Form */}
             <motion.form variants={fadeUp} custom={3} style={{ display: 'flex', flexDirection: 'column', gap: 16 }} onSubmit={handleSubmit}>
               {/* Email */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.02em' }} htmlFor="email">Email Address</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', letterSpacing: '0.02em' }} htmlFor="email">Email Address</label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiMail size={16} /></span>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: 'var(--text-faint)' }}><HiMail size={16} /></span>
                   <input id="email" name="email" type="email" autoComplete="email"
                     value={form.email} onChange={handleChange} placeholder="name@company.com"
                     className="lp-input" />
@@ -155,16 +163,16 @@ export default function Login() {
               {/* Password */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }} htmlFor="password">Password</label>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }} htmlFor="password">Password</label>
                   <a href="#" style={{ fontSize: 12, color: '#ff7557', textDecoration: 'none', fontWeight: 600 }}>Forgot password?</a>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiLockClosed size={16} /></span>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: 'var(--text-faint)' }}><HiLockClosed size={16} /></span>
                   <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
                     value={form.password} onChange={handleChange} placeholder="••••••••"
                     className="lp-input" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#aaa', padding: 2 }}>
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: 'var(--text-faint)', padding: 2 }}>
                     {showPassword ? <HiEyeOff size={16} /> : <HiEye size={16} />}
                   </button>
                 </div>
@@ -174,7 +182,7 @@ export default function Login() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input id="remember" name="remember" type="checkbox" checked={form.remember} onChange={handleChange}
                   style={{ width: 16, height: 16, accentColor: '#ff7557', cursor: 'pointer' }} />
-                <label htmlFor="remember" style={{ fontSize: 13, color: '#555', cursor: 'pointer' }}>Remember me for 30 days</label>
+                <label htmlFor="remember" style={{ fontSize: 13, color: 'var(--text-muted)', cursor: 'pointer' }}>Remember me for 30 days</label>
               </div>
 
               {/* Error */}
@@ -184,7 +192,7 @@ export default function Login() {
                     initial={{ opacity: 0, height: 0, y: -8 }}
                     animate={{ opacity: 1, height: 'auto', y: 0 }}
                     exit={{ opacity: 0, height: 0 }}
-                    style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+                    style={{ background: 'var(--red-bg)', border: '1.5px solid var(--accent)', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: 'var(--red-text)', display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
                     <HiExclamationCircle size={14} style={{ flexShrink: 0 }} /> {error}
                   </motion.div>
                 )}
@@ -212,8 +220,8 @@ export default function Login() {
             </motion.form>
 
             {/* Footer */}
-            <motion.div variants={fadeUp} custom={4} style={{ textAlign: 'center', borderTop: '1px solid #e8e5de', paddingTop: 16 }}>
-              <span style={{ fontSize: 13, color: '#666' }}>Don't have an account? </span>
+            <motion.div variants={fadeUp} custom={4} style={{ textAlign: 'center', borderTop: '1px solid var(--border-soft)', paddingTop: 16 }}>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>Don't have an account? </span>
               <Link to="/signup" style={{ fontSize: 13, color: '#ff7557', fontWeight: 800, textDecoration: 'none' }}>Sign up free</Link>
             </motion.div>
           </motion.div>
@@ -227,7 +235,7 @@ export default function Login() {
           >
             <div style={{ display: 'flex', gap: -4 }}>
               {['#ff7557', '#4285f4', '#34a853', '#fbbc05'].map((c, i) => (
-                <div key={i} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: '2px solid #f7f5f0', marginLeft: i ? -6 : 0 }} />
+                <div key={i} style={{ width: 24, height: 24, borderRadius: '50%', background: c, border: '2px solid var(--bg)', marginLeft: i ? -6 : 0 }} />
               ))}
             </div>
             <span>10,000+ professionals trust InterviewIQ</span>
@@ -236,8 +244,8 @@ export default function Login() {
       </main>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1.5px solid #e8e5de', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-        <span style={{ fontSize: 12, color: '#aaa', fontFamily: 'monospace' }}>© 2024 InterviewIQ AI. All rights reserved.</span>
+      <footer style={{ borderTop: '1.5px solid var(--border-soft)', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-faint)', fontFamily: 'monospace' }}>© 2024 InterviewIQ AI. All rights reserved.</span>
         <div style={{ display: 'flex', gap: 20 }}>
           {['Privacy Policy', 'Terms', 'Security'].map(l => (
             <a key={l} href="#" style={{ fontSize: 12, color: '#aaa', textDecoration: 'none', fontFamily: 'monospace' }}>{l}</a>

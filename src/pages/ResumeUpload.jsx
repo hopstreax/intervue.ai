@@ -6,6 +6,7 @@ import { HiHome, HiCheck, HiChevronRight, HiX } from 'react-icons/hi'
 import { BsFileTextFill, BsChatDotsFill, BsBarChartFill, BsPlusCircleFill, BsCloudUploadFill, BsShieldFillCheck, BsExclamationTriangleFill, BsLightningFill } from 'react-icons/bs'
 import { TbBrain } from 'react-icons/tb'
 import { MdMessage } from 'react-icons/md'
+import { useTheme } from '../context/ThemeContext'
 
 const EASE = [0.16, 1, 0.3, 1]
 const cardAnim = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }
@@ -22,7 +23,7 @@ function Sidebar({ active = 'upload' }) {
     { id: 'analytics', label: 'Analytics', Icon: BsBarChartFill,  to: '#' },
   ]
   return (
-    <aside style={{ display: 'none', flexDirection: 'column', height: '100vh', width: 240, background: '#fff', borderRight: '1.5px solid #1a1a1a', padding: '24px 0', position: 'fixed', left: 0, top: 0, zIndex: 40 }} className="hidden-mobile sidebar-desk">
+    <aside style={{ display: 'none', flexDirection: 'column', height: '100vh', width: 240, background: 'var(--sidebar-bg)', borderRight: '1.5px solid var(--border-soft)', padding: '24px 0', position: 'fixed', left: 0, top: 0, zIndex: 40, transition: 'background 0.3s, border-color 0.3s' }} className="hidden-mobile sidebar-desk">
       <style>{`.sidebar-desk { display: flex; } @media (max-width: 768px) { .sidebar-desk { display: none; } }`}</style>
       {/* Logo */}
       <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #e8e5de' }}>
@@ -139,12 +140,12 @@ export default function ResumeUpload() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f0', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex' }}>
+    <div className="theme-page" style={{ minHeight: '100vh', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        .coral-btn-ru { background: #ff7557; color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s, transform 0.15s; }
-        .coral-btn-ru:hover { background: #ff5e3a; }
+        .coral-btn-ru { background: var(--accent); color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s, transform 0.15s; }
+        .coral-btn-ru:hover { background: var(--accent-hover); }
         .coral-btn-ru:active { transform: scale(0.97); }
         .coral-btn-ru:disabled { opacity: 0.5; cursor: not-allowed; }
       `}</style>

@@ -5,6 +5,7 @@ import { HiUser, HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiC
 import { BsLightningFill, BsFileTextFill, BsCloudUploadFill, BsShieldFillCheck } from 'react-icons/bs'
 import { FaRocket } from 'react-icons/fa6'
 import { authService } from '../services'
+import { useTheme } from '../context/ThemeContext'
 
 const EASE = [0.16, 1, 0.3, 1]
 
@@ -28,6 +29,7 @@ const fadeUp = {
 
 export default function Signup() {
   const navigate = useNavigate()
+  const { isDark, toggleTheme } = useTheme()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [resume, setResume] = useState(null)
@@ -91,20 +93,16 @@ export default function Signup() {
   const strength = passwordStrength()
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f5f0', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex', flexDirection: 'column' }}>
+    <div className="theme-page" style={{ minHeight: '100vh', fontFamily: "'Inter', 'DM Sans', sans-serif", display: 'flex', flexDirection: 'column' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        .lp-input { width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid #d5d0c8; border-radius: 12px; font-size: 14px; font-family: Inter, sans-serif; background: #fff; color: #1a1a1a; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
-        .lp-input:focus { border-color: #ff7557; box-shadow: 0 0 0 3px rgba(255,117,87,0.12); }
-        .lp-input::placeholder { color: #aaa8a2; }
+        .lp-input { width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid var(--input-border); border-radius: 12px; font-size: 14px; font-family: Inter, sans-serif; background: var(--input-bg); color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .lp-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,117,87,0.12); }
+        .lp-input::placeholder { color: var(--text-placeholder); }
         .lp-input-no-icon { padding-left: 14px; }
-        .coral-solid { background: #ff7557; color: #1a0a04; border: none; cursor: pointer; font-weight: 800; border-radius: 99px; transition: background 0.2s, transform 0.15s; }
-        .coral-solid:hover { background: #ff5e3a; }
-        .coral-solid:active { transform: scale(0.97); }
-        .coral-solid:disabled { opacity: 0.55; cursor: not-allowed; }
-        .oauth-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1.5px solid #d5d0c8; border-radius: 12px; background: #fff; color: #1a1a1a; font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
-        .oauth-btn:hover { border-color: #1a1a1a; background: #f0ede8; }
+        .oauth-btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border: 1.5px solid var(--border-soft); border-radius: 12px; background: var(--surface); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .oauth-btn:hover { border-color: var(--border); background: var(--surface-2); }
       `}</style>
 
       {/* NAV */}
@@ -112,17 +110,26 @@ export default function Signup() {
         initial={{ y: -48, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.55, ease: EASE }}
-        style={{ position: 'sticky', top: 0, zIndex: 100, background: 'rgba(247,245,240,0.9)', backdropFilter: 'blur(18px)', borderBottom: '1.5px solid #1a1a1a', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        style={{ position: 'sticky', top: 0, zIndex: 100, background: 'var(--nav-bg)', backdropFilter: 'blur(18px)', borderBottom: '1.5px solid var(--border)', padding: '0 24px', height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.3s, border-color 0.3s' }}
       >
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 32, height: 32, background: '#1a1a1a', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 32, height: 32, background: 'var(--text)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ color: '#ff7557', fontSize: 16, fontWeight: 900, fontFamily: 'Space Grotesk' }}>IQ</span>
           </div>
-          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: '#1a1a1a', letterSpacing: '-0.03em' }}>InterviewIQ</span>
+          <span style={{ fontFamily: 'Space Grotesk', fontWeight: 700, fontSize: 18, color: 'var(--text)', letterSpacing: '-0.03em' }}>InterviewIQ</span>
         </Link>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <span style={{ fontSize: 13, color: '#666', alignSelf: 'center' }}>Have an account?</span>
-          <Link to="/login" style={{ textDecoration: 'none', padding: '7px 18px', borderRadius: 99, border: '1.5px solid #1a1a1a', color: '#1a1a1a', fontSize: 13, fontWeight: 700 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          {/* Theme Toggle */}
+          <label className="theme-toggle" title={isDark ? 'Switch to Light' : 'Switch to Dark'} style={{ marginRight: 4 }}>
+            <input type="checkbox" checked={isDark} onChange={toggleTheme} />
+            <div className="toggle-track">
+              <div className="toggle-thumb">
+                <span className="toggle-icon">{isDark ? '🌙' : '☀️'}</span>
+              </div>
+            </div>
+          </label>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)', alignSelf: 'center' }}>Have an account?</span>
+          <Link to="/login" style={{ textDecoration: 'none', padding: '7px 18px', borderRadius: 99, border: '1.5px solid var(--border)', color: 'var(--text)', fontSize: 13, fontWeight: 700 }}>
             Log in
           </Link>
         </div>
