@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Moon, Sun, Menu, X, Brain, User, LogOut } from 'lucide-react'
+import { HiMoon, HiSun, HiMenu, HiX, HiUser, HiLogout } from 'react-icons/hi'
+import { TbBrain } from 'react-icons/tb'
 import { useTheme } from '../context/ThemeContext'
 import { authService } from '../services'
 
@@ -37,7 +38,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center group-hover:shadow-neon transition-all duration-300">
-              <Brain className="w-5 h-5 text-white" />
+              <TbBrain className="w-5 h-5 text-white" />
             </div>
             <span className="text-lg font-bold dark:text-white text-gray-900">
               Intervue<span className="text-cyan-500">.AI</span>
@@ -72,7 +73,7 @@ export default function Navbar() {
                 border border-gray-200 dark:border-white/10"
               aria-label="Toggle theme"
             >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark ? <HiSun className="w-4 h-4" /> : <HiMoon className="w-4 h-4" />}
             </button>
 
             {/* Auth area — Desktop */}
@@ -97,7 +98,7 @@ export default function Navbar() {
                       text-red-500 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40
                       transition-all duration-200"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <HiLogout className="w-4 h-4" />
                     Logout
                   </button>
                 </>
@@ -129,7 +130,7 @@ export default function Navbar() {
                 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300"
               onClick={() => setMenuOpen(!menuOpen)}
             >
-              {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              {menuOpen ? <HiX className="w-4 h-4" /> : <HiMenu className="w-4 h-4" />}
             </button>
           </div>
         </div>
@@ -168,7 +169,7 @@ export default function Navbar() {
                 className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
                   text-red-500 border border-red-500/20 hover:bg-red-500/10 transition-all"
               >
-                <LogOut className="w-4 h-4" />
+                <HiLogout className="w-4 h-4" />
                 Logout
               </button>
             </div>

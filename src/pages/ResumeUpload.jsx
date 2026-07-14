@@ -1,7 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { API_BASE, authService } from '../services'
+import { HiHome, HiCheck, HiChevronRight, HiX } from 'react-icons/hi'
+import { BsFileTextFill, BsChatDotsFill, BsBarChartFill, BsPlusCircleFill, BsCloudUploadFill, BsShieldFillCheck, BsExclamationTriangleFill, BsLightningFill } from 'react-icons/bs'
+import { TbBrain } from 'react-icons/tb'
+import { MdMessage } from 'react-icons/md'
 
 const EASE = [0.16, 1, 0.3, 1]
 const cardAnim = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } } }
@@ -12,10 +16,10 @@ function Sidebar({ active = 'upload' }) {
   const navigate = useNavigate()
   const user = authService.getUser()
   const navItems = [
-    { id: 'dashboard', label: 'Home',      icon: '🏠', to: '/dashboard' },
-    { id: 'upload',    label: 'Resume',    icon: '📄', to: '/upload' },
-    { id: 'interview', label: 'Interview', icon: '💬', to: '/interview' },
-    { id: 'analytics', label: 'Analytics', icon: '📊', to: '#' },
+    { id: 'dashboard', label: 'Home',      Icon: HiHome,          to: '/dashboard' },
+    { id: 'upload',    label: 'Resume',    Icon: BsFileTextFill,  to: '/upload' },
+    { id: 'interview', label: 'Interview', Icon: MdMessage,        to: '/interview' },
+    { id: 'analytics', label: 'Analytics', Icon: BsBarChartFill,  to: '#' },
   ]
   return (
     <aside style={{ display: 'none', flexDirection: 'column', height: '100vh', width: 240, background: '#fff', borderRight: '1.5px solid #1a1a1a', padding: '24px 0', position: 'fixed', left: 0, top: 0, zIndex: 40 }} className="hidden-mobile sidebar-desk">
@@ -39,7 +43,7 @@ function Sidebar({ active = 'upload' }) {
             color: active === item.id ? '#ff7557' : '#555',
             transition: 'background 0.2s, color 0.2s',
           }}>
-            <span style={{ fontSize: 16 }}>{item.icon}</span>
+            <item.Icon size={16} />
             {item.label}
           </Link>
         ))}
@@ -210,9 +214,9 @@ export default function ResumeUpload() {
                       initial={{ scale: 0.5, rotate: -10 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-                      style={{ width: 52, height: 52, borderRadius: 16, background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}
+                      style={{ width: 52, height: 52, borderRadius: 16, background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      ✓
+                      <HiCheck size={24} color="#fff" />
                     </motion.div>
                     <div>
                       <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 20, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.03em' }}>Upload Successful!</h3>
@@ -258,7 +262,7 @@ export default function ResumeUpload() {
                       className="coral-btn-ru"
                       style={{ flex: 1, padding: '13px', fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, letterSpacing: '-0.01em' }}
                     >
-                      ▶ Start Interview Now
+                      <HiChevronRight size={16} /> Start Interview Now
                     </motion.button>
                     <button onClick={() => { setResult(null); setFile(null); setUploadProgress(0) }}
                       style={{ padding: '13px 20px', border: '1.5px solid #1a1a1a', borderRadius: 99, background: '#fff', color: '#1a1a1a', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
@@ -289,9 +293,9 @@ export default function ResumeUpload() {
                     >
                       <motion.div
                         animate={{ y: [0, -6, 0] }} transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                        style={{ width: 72, height: 72, borderRadius: '50%', background: '#fff', border: '1.5px solid #e8e5de', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}
+                        style={{ width: 72, height: 72, borderRadius: '50%', background: '#fff', border: '1.5px solid #e8e5de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
-                        📤
+                        <BsCloudUploadFill size={32} color={dragActive ? '#ff7557' : '#aaa'} />
                       </motion.div>
                       <div style={{ textAlign: 'center' }}>
                         <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 20, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.03em', marginBottom: 6 }}>
@@ -309,13 +313,13 @@ export default function ResumeUpload() {
                       style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 20px', borderRadius: 16, background: '#fff6f4', border: '1.5px solid #ff7557', marginBottom: 16 }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                        <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 20 }}>📄</div>
+                        <div style={{ width: 44, height: 44, borderRadius: 12, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><BsFileTextFill size={20} color="#1a0a04" /></div>
                         <div style={{ minWidth: 0 }}>
                           <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
                           <div style={{ fontSize: 11, color: '#888', fontFamily: 'monospace' }}>{(file.size / 1024).toFixed(1)} KB · PDF</div>
                         </div>
                       </div>
-                      <button onClick={removeFile} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#888', flexShrink: 0 }}>✕</button>
+                      <button onClick={removeFile} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#888', flexShrink: 0, padding: 4 }}><HiX size={16} /></button>
                     </motion.div>
                   )}
 
@@ -327,12 +331,12 @@ export default function ResumeUpload() {
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
-                    {[{ label: 'LinkedIn', icon: '💼' }, { label: 'GitHub', icon: '🐙' }, { label: 'Drive', icon: '📁' }].map(src => (
+                    {[{ label: 'LinkedIn', Icon: BsLightningFill }, { label: 'GitHub', Icon: TbBrain }, { label: 'Drive', Icon: BsShieldFillCheck }].map(src => (
                       <motion.button key={src.label}
                         whileHover={{ scale: 1.03, borderColor: '#1a1a1a' }} whileTap={{ scale: 0.97 }}
                         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px', border: '1.5px solid #d5d0c8', borderRadius: 14, background: '#f7f5f0', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#555', transition: 'border-color 0.2s' }}
                       >
-                        <span style={{ fontSize: 16 }}>{src.icon}</span>
+                        <src.Icon size={16} color="#888" />
                         {src.label}
                       </motion.button>
                     ))}
@@ -345,8 +349,8 @@ export default function ResumeUpload() {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
-                        style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', marginBottom: 16, overflow: 'hidden' }}>
-                        ⚠ {error}
+                        style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', marginBottom: 16, overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <BsExclamationTriangleFill size={13} style={{ flexShrink: 0 }} /> {error}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -383,7 +387,7 @@ export default function ResumeUpload() {
                           style={{ width: 18, height: 18, border: '2px solid rgba(26,10,4,0.2)', borderTopColor: '#1a0a04', borderRadius: '50%' }} />
                         Analyzing Resume...
                       </>
-                    ) : '✨ Generate Personalized Interview →'}
+                    ) : <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><BsLightningFill size={16} /> Generate Personalized Interview <HiChevronRight size={15} /></span>}
                   </motion.button>
                   <p style={{ textAlign: 'center', marginTop: 10, fontSize: 11, color: '#aaa', fontFamily: 'monospace' }}>
                     Your resume data is used only for generating personalized interview questions.
@@ -400,12 +404,12 @@ export default function ResumeUpload() {
               <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 15, fontWeight: 800, color: '#1a1a1a', marginBottom: 18, letterSpacing: '-0.02em' }}>How It Works</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {[
-                  { step: '01', title: 'Upload Resume', desc: 'Drop your PDF resume and let our AI parse it', icon: '📤' },
-                  { step: '02', title: 'AI Analysis', desc: 'We extract skills, experience and key projects', icon: '🧠' },
-                  { step: '03', title: 'Start Session', desc: 'Begin your personalized mock interview instantly', icon: '▶' },
+                  { step: '01', title: 'Upload Resume', desc: 'Drop your PDF resume and let our AI parse it', Icon: BsCloudUploadFill, color: '#fff6f4', border: '#ffd4c8', iconColor: '#ff7557' },
+                  { step: '02', title: 'AI Analysis', desc: 'We extract skills, experience and key projects', Icon: TbBrain, color: '#f0f9f4', border: '#bbf7d0', iconColor: '#22c55e' },
+                  { step: '03', title: 'Start Session', desc: 'Begin your personalized mock interview instantly', Icon: HiChevronRight, color: '#fefce8', border: '#fde68a', iconColor: '#d97706' },
                 ].map((item, i) => (
                   <div key={item.step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 12, background: i === 0 ? '#fff6f4' : i === 1 ? '#f0f9f4' : '#fefce8', border: `1px solid ${i === 0 ? '#ffd4c8' : i === 1 ? '#bbf7d0' : '#fde68a'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{item.icon}</div>
+                    <div style={{ width: 38, height: 38, borderRadius: 12, background: item.color, border: `1px solid ${item.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><item.Icon size={16} color={item.iconColor} /></div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                         <span style={{ fontSize: 10, fontWeight: 800, color: '#ccc', fontFamily: 'monospace' }}>{item.step}</span>

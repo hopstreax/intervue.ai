@@ -1,6 +1,9 @@
 import { useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { HiUser, HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiCheck, HiX, HiChevronLeft, HiArrowRight } from 'react-icons/hi'
+import { BsLightningFill, BsFileTextFill, BsCloudUploadFill, BsShieldFillCheck } from 'react-icons/bs'
+import { FaRocket } from 'react-icons/fa6'
 import { authService } from '../services'
 
 const EASE = [0.16, 1, 0.3, 1]
@@ -143,7 +146,7 @@ export default function Signup() {
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                   style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, fontFamily: 'Space Grotesk' }}
                 >
-                  {s < step ? '✓' : s}
+                  {s < step ? <HiCheck size={14} /> : s}
                 </motion.div>
                 <span style={{ fontSize: 12, fontWeight: 700, color: s <= step ? '#1a1a1a' : '#aaa', letterSpacing: '0.02em' }}>
                   {s === 1 ? 'Account' : 'Resume'}
@@ -171,7 +174,7 @@ export default function Signup() {
                       transition={{ type: 'spring', stiffness: 220, damping: 16 }}
                       style={{ width: 52, height: 52, borderRadius: 16, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}
                     >
-                      <span style={{ fontSize: 22 }}>🚀</span>
+                      <BsLightningFill size={22} color="#ff7557" />
                     </motion.div>
                     <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6 }}>Create your account</h1>
                     <p style={{ fontSize: 13, color: '#666' }}>Start your journey to interview mastery.</p>
@@ -207,7 +210,7 @@ export default function Signup() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                       <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }} htmlFor="name">Full Name</label>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>👤</span>
+                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiUser size={15} /></span>
                         <input id="name" name="name" type="text" autoComplete="name" value={form.name} onChange={handleChange} placeholder="John Doe" className="lp-input" />
                       </div>
                     </div>
@@ -215,7 +218,7 @@ export default function Signup() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                       <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }} htmlFor="signup-email">Email</label>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>✉</span>
+                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiMail size={15} /></span>
                         <input id="signup-email" name="email" type="email" autoComplete="email" value={form.email} onChange={handleChange} placeholder="name@company.com" className="lp-input" />
                       </div>
                     </div>
@@ -223,11 +226,11 @@ export default function Signup() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                       <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }} htmlFor="signup-password">Password</label>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>🔒</span>
+                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiLockClosed size={15} /></span>
                         <input id="signup-password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="new-password" value={form.password} onChange={handleChange} placeholder="Min. 8 characters" className="lp-input" />
                         <button type="button" onClick={() => setShowPassword(!showPassword)}
-                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#aaa' }}>
-                          {showPassword ? '🙈' : '👁'}
+                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#aaa', padding: 2 }}>
+                          {showPassword ? <HiEyeOff size={15} /> : <HiEye size={15} />}
                         </button>
                       </div>
                       {form.password && (
@@ -247,18 +250,18 @@ export default function Signup() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                       <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a' }} htmlFor="confirm-password">Confirm Password</label>
                       <div style={{ position: 'relative' }}>
-                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}>🔑</span>
+                        <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiLockClosed size={15} /></span>
                         <input id="confirm-password" name="confirm" type={showConfirm ? 'text' : 'password'} autoComplete="new-password" value={form.confirm} onChange={handleChange} placeholder="Repeat password" className="lp-input" />
                         <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#aaa' }}>
-                          {showConfirm ? '🙈' : '👁'}
+                          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#aaa', padding: 2 }}>
+                          {showConfirm ? <HiEyeOff size={15} /> : <HiEye size={15} />}
                         </button>
                       </div>
                       {form.confirm && form.password !== form.confirm && (
-                        <p style={{ fontSize: 11, color: '#ef4444', fontWeight: 600 }}>⚠ Passwords don't match</p>
+                        <p style={{ fontSize: 11, color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><HiExclamationCircle size={11} /> Passwords don't match</p>
                       )}
                       {form.confirm && form.password === form.confirm && form.confirm.length >= 8 && (
-                        <p style={{ fontSize: 11, color: '#22c55e', fontWeight: 600 }}>✓ Passwords match</p>
+                        <p style={{ fontSize: 11, color: '#22c55e', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><HiCheck size={11} /> Passwords match</p>
                       )}
                     </div>
 
@@ -268,8 +271,8 @@ export default function Signup() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', overflow: 'hidden' }}>
-                          ⚠ {error}
+                          style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <HiExclamationCircle size={13} style={{ flexShrink: 0 }} /> {error}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -292,7 +295,7 @@ export default function Signup() {
                       transition={{ type: 'spring', stiffness: 220, damping: 16 }}
                       style={{ width: 52, height: 52, borderRadius: 16, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}
                     >
-                      <span style={{ fontSize: 22 }}>📄</span>
+                      <BsFileTextFill size={22} color="#1a0a04" />
                     </motion.div>
                     <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 22, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6 }}>Upload Your Resume</h2>
                     <p style={{ fontSize: 13, color: '#666' }}>Optional — upload now or later from your dashboard.</p>
@@ -305,7 +308,7 @@ export default function Signup() {
                         onMouseOver={e => { e.currentTarget.style.borderColor = '#ff7557'; e.currentTarget.style.background = '#fff6f4'; }}
                         onMouseOut={e => { e.currentTarget.style.borderColor = '#d5d0c8'; e.currentTarget.style.background = '#f7f5f0'; }}
                       >
-                        <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff', border: '1.5px solid #e8e5de', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>📤</div>
+                        <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#fff', border: '1.5px solid #e8e5de', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><BsCloudUploadFill size={22} color="#ff7557" /></div>
                         <div style={{ textAlign: 'center' }}>
                           <div style={{ fontSize: 14, fontWeight: 700, color: '#1a1a1a', marginBottom: 4 }}>Click to upload or drag & drop</div>
                           <div style={{ fontSize: 12, color: '#888', fontFamily: 'monospace' }}>PDF only · Max 5 MB</div>
@@ -320,19 +323,19 @@ export default function Signup() {
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                           <div style={{ width: 38, height: 38, borderRadius: 10, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: 16 }}>📄</span>
+                            <BsFileTextFill size={16} color="#1a0a04" />
                           </div>
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{resume.name}</div>
                             <div style={{ fontSize: 11, color: '#888', fontFamily: 'monospace' }}>{(resume.size / 1024).toFixed(1)} KB</div>
                           </div>
                         </div>
-                        <button type="button" onClick={removeFile} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#888', flexShrink: 0 }}>✕</button>
+                        <button type="button" onClick={removeFile} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#888', flexShrink: 0, padding: 4 }}><HiX size={15} /></button>
                       </motion.div>
                     )}
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#f0f9f4', borderRadius: 12, border: '1px solid #bbf7d0' }}>
-                      <span style={{ fontSize: 16 }}>🛡</span>
+                      <BsShieldFillCheck size={16} color="#15803d" style={{ flexShrink: 0 }} />
                       <span style={{ fontSize: 12, color: '#15803d', fontWeight: 500 }}>Your data is encrypted and used only for generating interview questions.</span>
                     </div>
 
@@ -342,8 +345,8 @@ export default function Signup() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', overflow: 'hidden' }}>
-                          ⚠ {error}
+                          style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <HiExclamationCircle size={13} style={{ flexShrink: 0 }} /> {error}
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -360,12 +363,12 @@ export default function Signup() {
                             style={{ width: 16, height: 16, border: '2px solid rgba(26,10,4,0.2)', borderTopColor: '#1a0a04', borderRadius: '50%' }} />
                           Creating Account...
                         </>
-                      ) : resume ? '🚀 Create Account & Upload Resume' : '🚀 Create Account'}
+                      ) : <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><FaRocket size={15} /> {resume ? 'Create Account & Upload Resume' : 'Create Account'}</span>}
                     </motion.button>
 
                     <button type="button" onClick={() => setStep(1)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '4px 0' }}>
-                      ← Back to account details
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, padding: '4px 0' }}>
+                      <HiChevronLeft size={14} /> Back to account details
                     </button>
                   </form>
                 </motion.div>

@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiExclamationCircle, HiArrowRight } from 'react-icons/hi'
+import { HiSparkles } from 'react-icons/hi2'
 import { authService } from '../services'
 
 const EASE = [0.16, 1, 0.3, 1]
@@ -98,7 +100,7 @@ export default function Login() {
               transition={{ type: 'spring', stiffness: 220, damping: 16, delay: 0.05 }}
               style={{ width: 52, height: 52, borderRadius: 16, background: '#1a1a1a', border: '1.5px solid #1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}
             >
-              <span style={{ fontSize: 22 }}>👋</span>
+              <HiSparkles size={22} color="#ff7557" />
             </motion.div>
             <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 28, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6 }}>Welcome back</h1>
             <p style={{ fontSize: 14, color: '#666', lineHeight: 1.6 }}>Sign in to continue your interview prep journey.</p>
@@ -143,7 +145,7 @@ export default function Login() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 12, fontWeight: 700, color: '#1a1a1a', letterSpacing: '0.02em' }} htmlFor="email">Email Address</label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#aaa' }}>✉</span>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiMail size={16} /></span>
                   <input id="email" name="email" type="email" autoComplete="email"
                     value={form.email} onChange={handleChange} placeholder="name@company.com"
                     className="lp-input" />
@@ -157,13 +159,13 @@ export default function Login() {
                   <a href="#" style={{ fontSize: 12, color: '#ff7557', textDecoration: 'none', fontWeight: 600 }}>Forgot password?</a>
                 </div>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: '#aaa' }}>🔒</span>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', color: '#aaa' }}><HiLockClosed size={16} /></span>
                   <input id="password" name="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password"
                     value={form.password} onChange={handleChange} placeholder="••••••••"
                     className="lp-input" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#aaa' }}>
-                    {showPassword ? '🙈' : '👁'}
+                    style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#aaa', padding: 2 }}>
+                    {showPassword ? <HiEyeOff size={16} /> : <HiEye size={16} />}
                   </button>
                 </div>
               </div>
@@ -183,7 +185,7 @@ export default function Login() {
                     animate={{ opacity: 1, height: 'auto', y: 0 }}
                     exit={{ opacity: 0, height: 0 }}
                     style={{ background: '#fff0ed', border: '1.5px solid #ff7557', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-                    ⚠ {error}
+                    <HiExclamationCircle size={14} style={{ flexShrink: 0 }} /> {error}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -205,7 +207,7 @@ export default function Login() {
                     />
                     Signing in...
                   </>
-                ) : 'Log In →'}
+                ) : <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>Log In <HiArrowRight size={16} /></span>}
               </motion.button>
             </motion.form>
 

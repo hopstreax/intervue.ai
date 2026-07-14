@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useInView, animate } from 'framer-motion'
 import { authService, interviewService } from '../services'
+import { HiCheck, HiChevronRight, HiLogout } from 'react-icons/hi'
+import { BsBarChartFill, BsMap, BsPlusCircleFill } from 'react-icons/bs'
+import { TbBrain } from 'react-icons/tb'
+import { MdDownloadForOffline, MdOutlineRefresh } from 'react-icons/md'
+import { FaBookOpen, FaBullseye, FaTrophy, FaListCheck } from 'react-icons/fa6'
 
 const EASE = [0.16, 1, 0.3, 1]
 
@@ -145,13 +150,13 @@ function Sidebar({ overallScore, onSignOut, onNewInterview }) {
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
         {[
-          { label: 'Home', icon: '🏠', to: '/dashboard' },
-          { label: 'History', icon: '📋', to: '#', active: true },
-          { label: 'Analytics', icon: '📊', to: '#' },
-          { label: 'Settings', icon: '⚙', to: '#' },
+          { label: 'Home', Icon: FaBookOpen, to: '/dashboard' },
+          { label: 'History', Icon: FaListCheck, to: '#', active: true },
+          { label: 'Analytics', Icon: BsBarChartFill, to: '#' },
+          { label: 'Settings', Icon: FaBullseye, to: '#' },
         ].map(item => (
           <Link key={item.label} to={item.to} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, textDecoration: 'none', fontSize: 14, fontWeight: 600, background: item.active ? '#1a1a1a' : 'transparent', color: item.active ? '#ff7557' : '#555', transition: 'background 0.2s, color 0.2s' }}>
-            <span style={{ fontSize: 16 }}>{item.icon}</span>
+            <item.Icon size={16} />
             {item.label}
           </Link>
         ))}
@@ -160,12 +165,12 @@ function Sidebar({ overallScore, onSignOut, onNewInterview }) {
       {/* Bottom */}
       <div style={{ padding: '12px', borderTop: '1px solid #e8e5de' }}>
         <button onClick={onNewInterview}
-          style={{ display: 'block', width: '100%', textAlign: 'center', padding: '11px', background: '#ff7557', color: '#1a0a04', borderRadius: 99, fontWeight: 800, fontSize: 13, textDecoration: 'none', border: 'none', cursor: 'pointer', marginBottom: 10, letterSpacing: '-0.01em', fontFamily: 'Space Grotesk' }}>
-          + New Interview
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, width: '100%', textAlign: 'center', padding: '11px', background: '#ff7557', color: '#1a0a04', borderRadius: 99, fontWeight: 800, fontSize: 13, textDecoration: 'none', border: 'none', cursor: 'pointer', marginBottom: 10, letterSpacing: '-0.01em', fontFamily: 'Space Grotesk' }}>
+          <BsPlusCircleFill size={14} /> New Interview
         </button>
         <button onClick={onSignOut}
           style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 12, width: '100%', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: '#888', fontWeight: 600 }}>
-          🚪 Sign Out
+          <HiLogout size={14} /> Sign Out
         </button>
       </div>
     </aside>
@@ -292,13 +297,13 @@ export default function Summary() {
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button style={{ padding: '10px 18px', border: '1.5px solid #1a1a1a', borderRadius: 99, background: '#fff', color: '#1a1a1a', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
-              ⬇ Download PDF
+              <MdDownloadForOffline size={14} /> Download PDF
             </button>
             <motion.button onClick={() => navigate('/upload')}
               whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               className="coral-btn-sm"
               style={{ padding: '10px 20px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-              🔄 Retake
+              <MdOutlineRefresh size={13} /> Retake
             </motion.button>
           </div>
         </header>
@@ -306,15 +311,17 @@ export default function Summary() {
         {/* Tabs */}
         <div style={{ display: 'flex', gap: 4, borderBottom: '1.5px solid #1a1a1a', marginBottom: 28 }}>
           {[
-            { id: 'analysis', label: '📊 Analysis' },
-            { id: 'roadmap', label: '🗺 Roadmap' },
-            { id: 'study', label: '🧠 Study Plan' },
+            { id: 'analysis', label: 'Analysis', Icon: BsBarChartFill },
+            { id: 'roadmap', label: 'Roadmap', Icon: BsMap },
+            { id: 'study', label: 'Study Plan', Icon: TbBrain },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`sum-tab ${activeTab === tab.id ? 'active' : ''}`}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
+              <tab.Icon size={14} />
               {tab.label}
               {activeTab === tab.id && (
                 <motion.div layoutId="tabUnder"

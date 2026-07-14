@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { authService, interviewService } from '../services'
+import { HiMenu, HiX, HiCheck, HiLockClosed, HiChevronRight, HiArrowRight } from 'react-icons/hi'
+import { BsStopCircleFill, BsExclamationTriangleFill, BsSendFill, BsCpuFill, BsBarChartFill } from 'react-icons/bs'
+import { TbBrain } from 'react-icons/tb'
+import { MdTimer, MdSmartToy } from 'react-icons/md'
+import { FaCircleUser, FaCrown, FaRocket } from 'react-icons/fa6'
 
 const EASE = [0.16, 1, 0.3, 1]
 
@@ -195,10 +200,9 @@ export default function Interview() {
           </div>
         </div>
 
-        {/* Model badge */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid #e8e5de' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, background: '#fff6f4', border: '1.5px solid #ff7557', borderRadius: 99, padding: '5px 12px' }}>
-            <span style={{ fontSize: 12 }}>{modelType === 'gpt' ? '⊕' : '✦'}</span>
+            {modelType === 'gpt' ? <BsCpuFill size={13} color="#ff7557" /> : <TbBrain size={13} color="#ff7557" />}
             <span style={{ fontSize: 12, fontWeight: 700, color: '#ff7557', fontFamily: 'Space Grotesk' }}>{modelType === 'gpt' ? 'GPT-4o' : 'Gemini'}</span>
           </div>
         </div>
@@ -217,7 +221,7 @@ export default function Interview() {
                   style={{ width: 14, height: 14, border: '2px solid rgba(255,117,87,0.3)', borderTopColor: '#ff7557', borderRadius: '50%' }} />
                 Saving...
               </>
-            ) : '⏹ End & Grade Interview'}
+            ) : <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><BsStopCircleFill size={14} /> End & Grade Interview</span>}
           </motion.button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 4px', marginTop: 8 }}>
@@ -240,14 +244,14 @@ export default function Interview() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             {/* Mobile menu */}
             <button onClick={() => setSidebarOpen(true)} className="mobile-menu-btn"
-              style={{ background: 'none', border: '1.5px solid #1a1a1a', borderRadius: 8, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#1a1a1a' }}>
-              ☰
+              style={{ background: 'none', border: '1.5px solid #1a1a1a', borderRadius: 8, width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1a1a1a' }}>
+              <HiMenu size={18} />
             </button>
             <style>{`@media (min-width: 769px) { .mobile-menu-btn { display: none !important; } }`}</style>
 
             {/* Model badge */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fff6f4', border: '1px solid #ffd4c8', borderRadius: 99, padding: '4px 12px' }}>
-              <span style={{ fontSize: 12 }}>{modelType === 'gpt' ? '⊕' : '✦'}</span>
+              {modelType === 'gpt' ? <BsCpuFill size={12} color="#ff7557" /> : <TbBrain size={12} color="#ff7557" />}
               <span style={{ fontSize: 12, fontWeight: 700, color: '#ff7557', fontFamily: 'Space Grotesk' }}>{modelType === 'gpt' ? 'GPT-4o' : 'Gemini'}</span>
             </div>
 
@@ -263,15 +267,15 @@ export default function Interview() {
 
           {/* Timer + End */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: '#fff', border: '1px solid #e8e5de', borderRadius: 10, fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: '#555' }}>
-              ⏱ {formatTime(elapsed)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', background: '#fff', border: '1px solid #e8e5de', borderRadius: 10, fontFamily: 'monospace', fontWeight: 700, color: '#555' }}>
+              <MdTimer size={13} /> <span style={{ fontSize: 13 }}>{formatTime(elapsed)}</span>
             </div>
             <motion.button
               onClick={handleEndInterview}
               whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 16px', background: '#1a1a1a', color: '#ff7557', border: 'none', borderRadius: 99, fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: 'Space Grotesk' }}
             >
-              ⏹ End
+              <BsStopCircleFill size={13} /> End
             </motion.button>
           </div>
         </header>
@@ -287,16 +291,16 @@ export default function Interview() {
               </div>
             ) : !session && error ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 16 }}>
-                <span style={{ fontSize: 48 }}>⚠</span>
+                <BsExclamationTriangleFill size={40} color="#ff7557" />
                 <p style={{ fontSize: 14, color: '#666' }}>{error}</p>
                 <button onClick={startNewInterview}
-                  style={{ padding: '10px 24px', background: '#ff7557', color: '#1a0a04', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
-                  🔄 Retry
+                  style={{ padding: '10px 24px', background: '#ff7557', color: '#1a0a04', border: 'none', borderRadius: 99, fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <HiArrowRight size={14} /> Retry
                 </button>
               </div>
             ) : messages.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 16 }}>
-                <div style={{ width: 60, height: 60, borderRadius: 18, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>🤖</div>
+                <div style={{ width: 60, height: 60, borderRadius: 18, background: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><MdSmartToy size={26} color="#ff7557" /></div>
                 <p style={{ fontSize: 13, color: '#888', fontFamily: 'monospace' }}>Waiting for interview to begin...</p>
               </div>
             ) : (
@@ -313,10 +317,10 @@ export default function Interview() {
                     <div style={{
                       width: 36, height: 36, borderRadius: 12, flexShrink: 0,
                       background: msg.role === 'user' ? '#e8e5de' : '#1a1a1a',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
                       border: msg.role !== 'user' ? '1px solid #1a1a1a' : '1px solid #d5d0c8'
                     }}>
-                      {msg.role === 'user' ? '👤' : '🤖'}
+                      {msg.role === 'user' ? <FaCircleUser size={18} color="#555" /> : <MdSmartToy size={18} color="#ff7557" />}
                     </div>
                     {/* Bubble */}
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -371,7 +375,7 @@ export default function Interview() {
           <div style={{ maxWidth: 740, margin: '0 auto' }}>
             {error && (
               <div style={{ marginBottom: 10, padding: '8px 12px', background: '#fff0ed', border: '1px solid #ff7557', borderRadius: 10, fontSize: 12, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                ⚠ {error}
+                <BsExclamationTriangleFill size={13} style={{ flexShrink: 0 }} /> {error}
               </div>
             )}
             <form onSubmit={handleSend}
@@ -407,7 +411,7 @@ export default function Interview() {
                   color: inputVal.trim() ? '#1a0a04' : '#aaa'
                 }}
               >
-                ➤
+                <BsSendFill size={16} />
               </motion.button>
             </form>
             <p style={{ textAlign: 'center', marginTop: 8, fontSize: 10, color: '#aaa', fontFamily: 'monospace' }}>
@@ -436,22 +440,22 @@ export default function Interview() {
               {/* Close */}
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <button onClick={handleCloseUpgradeModal}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#888', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30 }}>✕</button>
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, color: '#888' }}><HiX size={18} /></button>
               </div>
 
               {/* PLAN STEP */}
               {paymentStep === 'plan' && (
                 <>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ width: 52, height: 52, borderRadius: 16, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 24 }}>⭐</div>
+                    <div style={{ width: 52, height: 52, borderRadius: 16, background: '#ff7557', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}><FaCrown size={22} color="#1a0a04" /></div>
                     <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 8 }}>Choose Your AI Power</h2>
                     <p style={{ fontSize: 13, color: '#666', maxWidth: 300, margin: '0 auto' }}>Upgrade to Premium to continue. Swap models mid-interview and get infinite questions.</p>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     {[
-                      { id: 'gemini', label: 'Google Gemini', sub: '1.5 Pro · Deep Analytical Insights', icon: '✦', accent: '#4285f4' },
-                      { id: 'gpt', label: 'ChatGPT', sub: 'GPT-4o · Precise Coding Synthesis', icon: '⊕', accent: '#10a37f' },
+                      { id: 'gemini', label: 'Google Gemini', sub: '1.5 Pro · Deep Analytical Insights', Icon: TbBrain, accent: '#4285f4' },
+                      { id: 'gpt', label: 'ChatGPT', sub: 'GPT-4o · Precise Coding Synthesis', Icon: BsCpuFill, accent: '#10a37f' },
                     ].map(m => (
                       <motion.button key={m.id} onClick={() => setModelType(m.id)}
                         whileHover={{ borderColor: m.accent }}
@@ -463,7 +467,7 @@ export default function Interview() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 800, fontSize: 14, color: '#1a1a1a', marginBottom: 4 }}>
-                          <span style={{ color: m.accent }}>{m.icon}</span>
+                          <m.Icon size={15} color={m.accent} />
                           {m.label}
                         </div>
                         <p style={{ fontSize: 11, color: '#888' }}>{m.sub}</p>
@@ -474,7 +478,7 @@ export default function Interview() {
                   <div style={{ padding: '14px 16px', background: '#f7f5f0', border: '1px solid #e8e5de', borderRadius: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {['Unlimited technical Q&A sessions', 'Personalized shortcoming lists & roadmaps', 'PDF reports & future Voice Mode access'].map(f => (
                       <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#333' }}>
-                        <span style={{ color: '#22c55e', fontWeight: 800 }}>✓</span>
+                        <HiCheck size={13} color="#22c55e" />
                         {f}
                       </div>
                     ))}
@@ -492,7 +496,7 @@ export default function Interview() {
                       whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
                       className="coral-btn-int"
                       style={{ padding: '12px 24px', fontSize: 14, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      Choose Plan →
+                      Choose Plan <HiChevronRight size={15} />
                     </motion.button>
                   </div>
                 </>
@@ -502,7 +506,7 @@ export default function Interview() {
               {paymentStep === 'checkout' && (
                 <form onSubmit={handleUpgradePayment} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <div style={{ textAlign: 'center' }}>
-                    <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 22, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6 }}>🔒 Secure Sandbox Checkout</h2>
+                    <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 22, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><HiLockClosed size={18} /> Secure Sandbox Checkout</h2>
                     <p style={{ fontSize: 13, color: '#666' }}>Complete the payment using this free checkout simulation.</p>
                   </div>
 
@@ -537,7 +541,7 @@ export default function Interview() {
                   </div>
 
                   {error && (
-                    <div style={{ background: '#fff0ed', border: '1px solid #ff7557', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#c0392b' }}>⚠ {error}</div>
+                    <div style={{ background: '#fff0ed', border: '1px solid #ff7557', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#c0392b', display: 'flex', alignItems: 'center', gap: 6 }}><BsExclamationTriangleFill size={13} style={{ flexShrink: 0 }} /> {error}</div>
                   )}
 
                   <div style={{ display: 'flex', gap: 12 }}>
@@ -549,7 +553,7 @@ export default function Interview() {
                       whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                       className="coral-btn-int"
                       style={{ flex: 1, padding: '12px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                      {processingPayment ? '⏳ Processing...' : '🔒 Complete Payment'}
+                      {processingPayment ? <><MdTimer size={14} className="animate-spin" /> Processing...</> : <><HiLockClosed size={14} /> Complete Payment</>}
                     </motion.button>
                   </div>
                 </form>
@@ -562,9 +566,9 @@ export default function Interview() {
                     initial={{ scale: 0.5, rotate: -45 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 12 }}
-                    style={{ width: 64, height: 64, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}
+                    style={{ width: 64, height: 64, borderRadius: '50%', background: '#22c55e', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >
-                    ✓
+                    <HiCheck size={28} color="#fff" />
                   </motion.div>
                   <div>
                     <h2 style={{ fontFamily: 'Space Grotesk', fontSize: 24, fontWeight: 900, color: '#1a1a1a', letterSpacing: '-0.04em', marginBottom: 8 }}>Payment Successful!</h2>
@@ -576,7 +580,7 @@ export default function Interview() {
                     whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                     className="coral-btn-int"
                     style={{ width: '100%', padding: '14px', fontSize: 15, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                    🚀 Unlock & Continue Interview
+                    <FaRocket size={15} /> Unlock & Continue Interview
                   </motion.button>
                 </div>
               )}
